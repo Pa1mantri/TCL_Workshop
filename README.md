@@ -27,7 +27,8 @@ The process converting this .csv file data into data sheet using TCL script is d
 
  <img width="960" alt="Screenshot 2023-11-01 120342" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/390ec9f5-81d4-475b-882a-08ab1c934d0b">
      
-    This has to be converted into SDC (Synopsys Design Constraint) format. SDC format is a standard representation across the industry, acceptable to all the CAD tools. This conversion also happens using TCL Script. This is the second sub-task apart from creating a command(i.e. 1st sub-task)
+ This has to be converted into SDC (Synopsys Design Constraint) format. SDC format is a standard representation across the industry, acceptable to all the CAD tools. This 
+ conversion also happens using TCL Script. This is the second sub-task apart from creating a command(i.e. 1st sub-task)
     
 3. Next Sub-task is to convert this format[1] data & SDC data into different format i.e. format2 and pass it to timing tool “**Opentimer**”. opentimer accepts command in this fashion
     
@@ -86,7 +87,7 @@ OutputDirectory refers to the /outdir_OpenMSP430 and so on.
 
 Various steps involved in creating variables are, first converting the excel(csv file) data into a matrix and then convert the matrix into an array. Reason for converting a matrix into an array is: you can access any individual block(cell) like my_arr[1,2].
 
-![Screenshot 2023-11-02 144130.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/6454ab7d-1f39-4f52-9796-24c9d662c201/Screenshot_2023-11-02_144130.png)
+<img width="944" alt="Screenshot 2023-11-02 144130" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/d6972ec6-5826-4999-b4df-99f59e10b7c1">
 
 Command to create a matrix object with matrix name m is **struct :: matrix m**
 
@@ -94,9 +95,9 @@ Command to create a matrix object with matrix name m is **struct :: matrix m**
 
 **csv :: read2matrix $f m, auto**  Convert the file($f) which is in open(read) mode into a matrix, use the comma as the separator to form different cells in the matrix, auto command will automatically identifies the size of the matrix.
 
-![Screenshot 2023-11-02 151748.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/f0741813-64a7-41e9-a0d3-632271e89629/Screenshot_2023-11-02_151748.png)
+<img width="912" alt="Screenshot 2023-11-02 151748" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/8cf2cedc-194c-4d77-9016-e353a71a5039">
 
-**close $f :**Since all the information of the csv files is now included in the matrix, we can close the file.
+**close $f :** Since all the information of the csv files is now included in the matrix, we can close the file.
 
 **set columns [m columns]** will return the number of columns in the matrix above. Auto command already identified the number the rows and columns in the above step. Having a variable to address the number of columns is an advantage. we can use it variable further. Similarly for rows,               **set num_of_rows [m rows]** will gives the value of no of rows in the matrix.
 
@@ -104,24 +105,25 @@ Command to create a matrix object with matrix name m is **struct :: matrix m**
 
 Now we will run a loop which will set the design name to OpenMSP430 and all the other variables to the respective paths. In the matrix form, they all are independent entities. We will correlate each one with the respective paths.
 
-![Screenshot 2023-11-02 154915.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/c2b4cc23-460e-4e48-8aac-c80342220838/Screenshot_2023-11-02_154915.png)
+<img width="605" alt="Screenshot 2023-11-02 154915" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/12f17240-ed59-4f4b-9ddb-aa5cd73b4ce3">
 
 Info: Setting Design name as ‘OpenMSP_430’
 
-![Screenshot 2023-11-02 160043.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/a3b945f4-77f0-40a5-8603-13c152007000/Screenshot_2023-11-02_160043.png)
+<img width="937" alt="Screenshot 2023-11-02 160043" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/e32e1c86-e81c-42b7-ae56-5ebf949efc48">
 
 Here first variable is set. i.e. DesignName variable is set to $my_arr(1,0);  string map helps in removing the space between the Design Name. After this step **$DesignName = openMSP_430**
 
 **file normalize** will remove the tilda(~) and replace with the absolute path
 
-![Screenshot 2023-11-02 161312.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/2ad8e708-dce3-4106-a932-150f1a087381/Screenshot_2023-11-02_161312.png)
+<img width="420" alt="Screenshot 2023-11-02 161312" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/25960da2-009e-497a-89ee-c85021e56379">
 
 After auto creating all the variables, this is how it should be
 
-![Screenshot 2023-11-02 163204.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/c42aeacb-f9f1-4336-b978-a057cfccab30/Screenshot_2023-11-02_163204.png)
+<img width="864" alt="Screenshot 2023-11-02 163204" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/29fc46c0-3a9b-4569-80e0-0de6ecb6209f">
+
 
 **Checking if directories and files in csv file exists or not** We need to check whether the file paths mentioned in the csv file (output directory, netlist directory) and files inside exists or not, otherwise vsdsynth.tcl flow breaks.
 
 **Reading constraints file and converting it to  SDC format** SDC is a standard Synopsys Design Constraint format. We need to convert this so that it can be used in the future by the PNR tool or STA tool.
 
-[Take Aways](https://www.notion.so/Take-Aways-81130c12bbf8419fbf62804fa3acb579?pvs=21)
+
