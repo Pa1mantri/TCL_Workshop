@@ -129,12 +129,163 @@ After finding the row numbers from which input , output and clock port starts. F
 
 TCL script for processing clock constraints
 
+Code
+```
+#-----------Constrisnt file creation-----------------#
+#------SDC Format------------------------------------#
+#----------------------------------------------------#
+
+puts "\nDumping SDC constraints for $DesignName"
+::struct::matrix constraints
+set chan [open $ConstraintsFile]
+csv::read2matrix $chan constraints , auto
+close $chan
+set cons_rows [constraints rows]
+set cons_columns [constraints columns]
+puts "$cons_rows"
+puts "$cons_columns"
+
+
+#check the row number for clock and column number of clock#
+set clock_start [lindex [lindex [constraints search all CLOCKS] 0 ] 1]
+set clock_start_column [lindex [lindex [constraints search all CLOCKS] 0] 0]
+puts "Row from which clock starts = $clock_start"
+puts "column from which clock starts = $clock_start_column"
+
+#check for row number for input section in constraints.csv file#
+set input_port_start [lindex [lindex [constraints search all INPUTS] 0] 1]
+puts "row from which input ports start = $input_port_start"
+
+#check for row number for output section in constraints.csv file#
+set output_port_start [lindex [lindex [constraints search all OUTPUTS] 0] 1]
+puts "row from which output ports start = $output_port_start"
+
+#--------------------------------------------------------#
+#-----------clock latency constraints--------------------#
+
+set clock_early_rise_delay_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_rise_delay] 0 ] 0]
+set clock_early_fall_delay_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_fall_delay] 0 ] 0]
+set clock_late_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_rise_delay] 0 ] 0]
+set clock_late_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_fall_delay] 0 ] 0]
+
+#--------------------------------------------------------#
+#---------clock transisition constraints-----------------#
+
+set clock_early_rise_slew_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_rise_slew] 0 ] 0]
+set clock_early_fall_slew_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_fall_slew] 0 ] 0]
+set clock_late_rise_slew_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_rise_slew] 0 ] 0]
+set clock_late_fall_slew_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_fall_slew] 0 ] 0]
+
+set sdc_file [open $OutputDirectory/$DesignName.sdc "w"]
+set i [expr {$clock_start + 1}]
+set end_of_clock_ports [expr {$input_port_start -1}]
+puts "/nInfo: Working on clock constraints"
+while { $i < $end_of_clock_ports } {
+	puts "working on clock [constraints get cell 0 $i]"
+	puts -nonewline $sdc_file  "\ncreate_clock -name [constraints get cell 0 $i] -period [constraints get cell 1 $i] -waveform \{0 [expr {[constraints get cell 1 $i]*[constraints get cell 2 $i]/100}] \}\[get_ports [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_transition -rise -min [constraints get cell $clock_early_rise_slew_start $i] \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_transition -fall -min [constraints get cell $clock_early_fall_slew_start $i] \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_transition -rise -max [constraints get cell $clock_late_rise_slew_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_transition -fall -max [constraints get cell $clock_late_fall_slew_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_latency -source -early -rise [constraints get cell $clock_early_rise_delay_start $i] \[get_clocks [constraints get cell 0 $i]\]" 
+	puts -nonewline $sdc_file "\nset_clock_latency -source -early -fall [constraints get cell $clock_early_fall_delay_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_latency -source -late -rise  [constraints get cell $clock_late_rise_delay_start $i]   \[get_clocks [constraints get cell 0 $i]\]"
+	puts -nonewline $sdc_file "\nset_clock_latency -source -late -fall  [constraints get cell $clock_late_fall_delay_start $i]   \[get_clocks [constraints get cell 0 $i]\]"
+	set i [expr {$i + 1}]
+}
+
+```
+
 <img width="936" alt="Screenshot 2023-11-04 190457" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/0205f418-8d45-4592-9ac2-66e16d517e8d">
 
 <img width="834" alt="Screenshot 2023-11-04 190513" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/a1834b10-333e-443c-877f-e9b76bc9d3e9">
 
 Code
 ```
+#--------------------------------------------------------------#
+#--Create input delay and slew constraints---------------------#
+#--------------------------------------------------------------#
+
+set input_early_rise_delay_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_rise_delay] 0 ] 0]
+set input_early_fall_delay_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_fall_delay] 0 ] 0]
+set input_late_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_rise_delay] 0 ] 0]
+set input_late_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_fall_delay] 0 ] 0]
+
+
+set input_early_rise_slew_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_rise_slew] 0 ] 0]
+set input_early_fall_slew_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_fall_slew] 0 ] 0]
+set input_late_rise_slew_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_rise_slew] 0 ] 0]
+set input_late_fall_slew_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_fall_slew] 0 ] 0]
+
+set related_clock [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] clocks] 0] 0]
+
+set i [expr {$input_port_start +1}]
+set end_of_input_port [expr {$output_port_start - 1}]
+puts "\nInfo:Working on IO Constraints.."
+puts "\nInfo:Caretorizing inputs as bits and busses"
+while {$i < $end_of_input_port } {
+	#------Differentiating the input ports between bits and bus---------#
+set netlist [glob -dir $NetlistDirectory *.v]
+set tmp_file [open /tmp/1 w]
+foreach f $netlist {
+	set fd [open $f]
+	#puts "Reading file $f"
+	while {[gets $fd line] != -1} {     
+		set pattern1 " [constraints get cell 0 $i];"
+		if {[regexp -all -- $pattern1 $line]}  {
+			#puts "pattern1"
+			set pattern2 [lindex [split $line ";"] 0]
+			#puts "pattern2"
+			if {[regexp -all  {input} [lindex [split $pattern2 "\S+"]0]]} {
+				#puts "Out of all patterns, $pattern2"
+				set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
+				#puts "Printing first three elements of pattern2 \"$s1\" using space as delimiter"
+				puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
+				#puts "replace multiple spaces using one space as \"[regsub -all {\s+} $s1 " "]\""
+			}
+		}
+	}
+	close $fd
+}
+close $tmp_file
+set tmp_file [open /tmp/1 r]
+set tmp2_file [open /tmp/2 w]
+puts -nonewline $tmp2_file "[join [lsort -unique [split [read $tmp_file] \n]] \n]"
+close $tmp_file
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+set count [llength [read $tmp2_file]]
+#puts "splitting contents of tmp_2 and counting number of elements in $count"
+if {$count > 2} {
+	set inp_ports [concat [constraints get cell 0 $i]*]
+	#puts "bussed"
+} else {
+	set inp_ports [constraints get cell 0 $i] 
+	#puts "not bussed"
+
+}
+
+#------------set input transition SDC commands --------#
+puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $input_early_rise_slew_start $i] \[get_ports $inp_ports\]" 
+puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $input_early_fall_slew_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $input_late_rise_slew_start $i] \[get_ports $inp_ports\]"
+
+puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $input_late_fall_slew_start $i] \[get_ports $inp_ports\]"
+
+
+#-----------------set input delay SDC commands-----------#
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $input_early_rise_delay_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $input_early_fall_delay_start $i] \[get_ports $inp_ports\]"
+
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $input_late_rise_delay_start $i] \[get_ports $inp_ports\]"
+
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $input_late_fall_delay_start $i] \[get_ports $inp_ports\]"
+
+
+set i [expr {$i+1}]
+}
+close $tmp2_file
+
 ```
 Generated SDC file generated in the output directory after reading the values from the csv file
 
