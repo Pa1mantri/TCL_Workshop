@@ -119,7 +119,7 @@ Here first variable is set. i.e. DesignName variable is set to $my_arr(1,0);  st
 
 After auto creating all the variables, this is how it should be
 
-<img width="864" alt="Screenshot 2023-11-02 163204" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/29fc46c0-3a9b-4569-80e0-0de6ecb6209f">
+<img width="398" alt="Screenshot 2023-11-03 170227" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/0ffb5b1d-632a-46b2-a90f-63b7ce5b4c4b">
 
 In a similar way how we convert the design_details.csv file into a matrix and, we perform the same action to the constraints.csv file.
 
