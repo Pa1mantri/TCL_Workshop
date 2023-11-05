@@ -125,17 +125,17 @@ In a similar way how we convert the design_details.csv file into a matrix and, w
 
 After finding the row numbers from which input , output and clock port starts. First start the script by processing the clock constraints in the csv file.
 
-![Screenshot 2023-11-04 111746.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/632b6a85-8dbf-4cb5-90c0-0635fbea27b7/Screenshot_2023-11-04_111746.png)
+<img width="881" alt="Screenshot 2023-11-04 111746" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/4fffd0cf-40e4-4ea0-8176-b449735e3614">
 
 TCL script for processing clock constraints
 
-![Screenshot 2023-11-04 190457.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/e15468dd-58a9-48e7-9915-c4c799f384a1/Screenshot_2023-11-04_190457.png)
+<img width="936" alt="Screenshot 2023-11-04 190457" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/0205f418-8d45-4592-9ac2-66e16d517e8d">
 
-![Screenshot 2023-11-04 190513.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/05907427-d90c-45c6-8207-64622fba25ec/Screenshot_2023-11-04_190513.png)
+<img width="834" alt="Screenshot 2023-11-04 190513" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/a1834b10-333e-443c-877f-e9b76bc9d3e9">
 
 The SDC file generated in the output directory after reading the values from the csv file
 
-![Screenshot 2023-11-04 190423.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/fcc515d7-2ce2-46fd-86f0-a24e2cd207f0/Screenshot_2023-11-04_190423.png)
+<img width="598" alt="Screenshot 2023-11-04 190423" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/80361042-0b0f-4110-a892-28ce1861ee40">
 
 **Processing input constraints**
 
@@ -145,11 +145,13 @@ The SDC file generated in the output directory after reading the values from the
 
 SDC file after input constraints are added into file through TCL script
 
-![Screenshot 2023-11-05 184741.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/886a10ff-31f6-4a3a-acde-a4b7f257bd87/Screenshot_2023-11-05_184741.png)
+<img width="681" alt="Screenshot 2023-11-05 184741" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/81f417d4-c642-4d98-83a1-e6abe99353cb">
 
 After searching the SDC file using grep command, to check the bussed signals, which are represented using *.
 
-![Screenshot 2023-11-05 184635.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/a484a0da-a384-41f4-ba76-664a2ca94c39/Screenshot_2023-11-05_184635.png)
+<img width="660" alt="Screenshot 2023-11-05 184635" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/c3a3db42-e576-4a17-b415-aec5b34ebb49">
+
+
 
 
 
