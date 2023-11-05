@@ -121,7 +121,35 @@ After auto creating all the variables, this is how it should be
 
 <img width="864" alt="Screenshot 2023-11-02 163204" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/29fc46c0-3a9b-4569-80e0-0de6ecb6209f">
 
+In a similar way how we convert the design_details.csv file into a matrix and, we perform the same action to the constraints.csv file.
 
+After finding the row numbers from which input , output and clock port starts. First start the script by processing the clock constraints in the csv file.
+
+![Screenshot 2023-11-04 111746.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/632b6a85-8dbf-4cb5-90c0-0635fbea27b7/Screenshot_2023-11-04_111746.png)
+
+TCL script for processing clock constraints
+
+![Screenshot 2023-11-04 190457.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/e15468dd-58a9-48e7-9915-c4c799f384a1/Screenshot_2023-11-04_190457.png)
+
+![Screenshot 2023-11-04 190513.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/05907427-d90c-45c6-8207-64622fba25ec/Screenshot_2023-11-04_190513.png)
+
+The SDC file generated in the output directory after reading the values from the csv file
+
+![Screenshot 2023-11-04 190423.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/fcc515d7-2ce2-46fd-86f0-a24e2cd207f0/Screenshot_2023-11-04_190423.png)
+
+**Processing input constraints**
+
+**set netlist [glob -dir $NetlistDirectory *.v]**  This command helps in getting all the .v files inside the NetlistDirectory. We can access all these files using $netlist variable.
+
+**set tmp_file [open /tmp/1 w]**  Opening a temporary file in write mode.
+
+SDC file after input constraints are added into file
+
+![Screenshot 2023-11-05 184741.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/886a10ff-31f6-4a3a-acde-a4b7f257bd87/Screenshot_2023-11-05_184741.png)
+
+After searching the SDC file using grep command, to check the bussed signals, which are represented using *.
+
+![Screenshot 2023-11-05 184635.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/a484a0da-a384-41f4-ba76-664a2ca94c39/Screenshot_2023-11-05_184635.png)
 **Checking if directories and files in csv file exists or not** We need to check whether the file paths mentioned in the csv file (output directory, netlist directory) and files inside exists or not, otherwise vsdsynth.tcl flow breaks.
 
 **Reading constraints file and converting it to  SDC format** SDC is a standard Synopsys Design Constraint format. We need to convert this so that it can be used in the future by the PNR tool or STA tool.
