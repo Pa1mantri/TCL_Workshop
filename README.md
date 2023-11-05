@@ -143,15 +143,13 @@ The SDC file generated in the output directory after reading the values from the
 
 **set tmp_file [open /tmp/1 w]**  Opening a temporary file in write mode.
 
-SDC file after input constraints are added into file
+SDC file after input constraints are added into file through TCL script
 
 ![Screenshot 2023-11-05 184741.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/886a10ff-31f6-4a3a-acde-a4b7f257bd87/Screenshot_2023-11-05_184741.png)
 
 After searching the SDC file using grep command, to check the bussed signals, which are represented using *.
 
 ![Screenshot 2023-11-05 184635.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/2a93c1a9-af21-459a-9f69-6f78e913144b/a484a0da-a384-41f4-ba76-664a2ca94c39/Screenshot_2023-11-05_184635.png)
-**Checking if directories and files in csv file exists or not** We need to check whether the file paths mentioned in the csv file (output directory, netlist directory) and files inside exists or not, otherwise vsdsynth.tcl flow breaks.
 
-**Reading constraints file and converting it to  SDC format** SDC is a standard Synopsys Design Constraint format. We need to convert this so that it can be used in the future by the PNR tool or STA tool.
 
 
