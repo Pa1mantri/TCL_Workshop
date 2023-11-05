@@ -133,7 +133,10 @@ TCL script for processing clock constraints
 
 <img width="834" alt="Screenshot 2023-11-04 190513" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/a1834b10-333e-443c-877f-e9b76bc9d3e9">
 
-The SDC file generated in the output directory after reading the values from the csv file
+Code
+```
+```
+Generated SDC file generated in the output directory after reading the values from the csv file
 
 <img width="598" alt="Screenshot 2023-11-04 190423" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/80361042-0b0f-4110-a892-28ce1861ee40">
 
