@@ -9,8 +9,7 @@ Using TCL Scripting, here we will convert the data present in the .csv file( exc
 
 All the files that are present in the above file are sourced from vsdsynth folder.
 
-<img width="629" alt="Screenshot 2023-11-01 114439" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/af8e158e-78a1-490e-bf7b-b1e21f1cfd52">
-
+<img width="931" alt="Screenshot 2023-11-06 170549" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/b1ecf608-dc71-4167-80d3-00291edba9fc">
 
 The process converting this .csv file data into data sheet using TCL script is divided into three sub-tasks.
 
@@ -300,9 +299,16 @@ After searching the SDC file using grep command, to check the bussed signals, wh
 Code
 ```
 ```
+<img width="921" alt="Screenshot 2023-11-06 171601" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5c74c0f3-8f59-4db5-a529-ef63d1958e9c">
+
+SDC file after output constraints are generated
+
+<img width="929" alt="Screenshot 2023-11-06 171649" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/2afb76ab-29b9-48ae-9521-b0d8a49bb1b4">
 
 **Memory Module Yosys Synthesis and Explanation**
+
 The Verilog code for a single bit address and single bit data Memory unit is given below
+
 ```
 memory module (CLK, ADDR, DIN, DOUT)
 
