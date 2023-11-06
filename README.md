@@ -17,11 +17,7 @@ The process converting this .csv file data into data sheet using TCL script is d
 1. Create command named “vsdsynth” which takes the .csv file and passes the .csv file to TCL script.
 2. Convert all the inputs in the .csv file into two different formats. One is format1 and the other is sdc format.
     
- <img width="863" alt="Screenshot 2023-11-01 115834" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/4426f053-85b5-4ebe-a720-eeded7cff8a8">
-
- The above image shows how format[1] looks. Since the format1 information has to be passed to yosys tool, it has to be presented in a way that is understood by yosys.
-    
- Similarly there is another file openMSP430_design_constraints_csv files which looks like the image below 
+Similarly there is another file openMSP430_design_constraints_csv files which looks like the image below 
     
  <img width="930" alt="Screenshot 2023-11-01 120111" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/a80dd716-35dd-4d77-9eb4-c54520330cbe">
 
@@ -31,9 +27,6 @@ The process converting this .csv file data into data sheet using TCL script is d
  conversion also happens using TCL Script. This is the second sub-task apart from creating a command(i.e. 1st sub-task)
     
 3. Next Sub-task is to convert this format[1] data & SDC data into different format i.e. format2 and pass it to timing tool “**Opentimer**”. opentimer accepts command in this fashion
-    
-    <img width="424" alt="Screenshot 2023-11-01 121238" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/340fd6af-7973-4c6d-b8d5-cf41fbbf9ba4">
-
     
     This Opentimer tool is responsible for creating the **final data sheet representation** of the .csv file which is given as input.  Finally the output report should be generated in the format shown in the image below. The input is a .csv file and after performing all the sub-tasks the output should look like this.
     
@@ -114,8 +107,6 @@ Info: Setting Design name as ‘OpenMSP_430’
 Here first variable is set. i.e. DesignName variable is set to $my_arr(1,0);  string map helps in removing the space between the Design Name. After this step **$DesignName = openMSP_430**
 
 **file normalize** will remove the tilda(~) and replace with the absolute path
-
-<img width="420" alt="Screenshot 2023-11-02 161312" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/25960da2-009e-497a-89ee-c85021e56379">
 
 After auto creating all the variables, this is how it should be
 
@@ -305,23 +296,83 @@ After searching the SDC file using grep command, to check the bussed signals, wh
 
 <img width="660" alt="Screenshot 2023-11-05 184635" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/c3a3db42-e576-4a17-b415-aec5b34ebb49">
 
+**Processing Output delay and load Constraints**
+Code
+```
+```
+
 **Memory Module Yosys Synthesis and Explanation**
 The Verilog code for a single bit address and single bit data Memory unit is given below
+```
+memory module (CLK, ADDR, DIN, DOUT)
+
+parameter wordSize =1;
+parameter addressSize = 1;
+
+input ADDR,CLK;
+input [wordSize-1:0] DIN;
+output reg [wordSize-1:0] DOUT;
+reg [wordSize:0] mem [0:(1<<addrSize)-1];
+
+always@(posedge CLK)
+begin
+mem[ADDR] <=DIN;
+DOUT <= mem[ADDR];
+end
+endmodule
+```
 The basic Yosys script to run this and obtain a gate-level netlist of the memory module is given below.
+<img width="612" alt="Screenshot 2023-11-06 161307" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/8195f5ee-0624-4534-8e7d-dc2768859c7b">
+
 The output view of the netlist from the code is shown below
-Memory write process is explained in the following images 
+<img width="610" alt="Screenshot 2023-11-06 161322" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/3c022387-ad9a-410b-aaa0-c04fb16115e4">
+
+Memory write process is explained in the following images.
 Memory Write
+
+<img width="619" alt="Screenshot 2023-11-06 161333" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/b6e769d3-f03f-4f73-b67a-92394bdeaa4e">
+
 Before First rising edge of the clock
+
+<img width="610" alt="Screenshot 2023-11-06 161424" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5e1f0718-4f64-453a-93e2-28301d6fe8ad">
+
 After first rising edge of the clock. Memory write is Done.
-Memory Read process is explained 
+
+<img width="615" alt="Screenshot 2023-11-06 161435" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/74dc11a2-900d-4b3a-86d3-cabb88d7bb21">
+
+Memory Read process is explained below. 
 Memory Read
+
+<img width="612" alt="Screenshot 2023-11-06 161451" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/0ea11920-8621-4984-b463-0877266e3e76">
+
 After the first rising edge and before the second rising edge of the clock
+
+<img width="607" alt="Screenshot 2023-11-06 161508" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/93bf23ea-a1c7-4a19-a209-50dddc87914e">
+
 After the second rising edge. Memory Read is done.
+
+<img width="611" alt="Screenshot 2023-11-06 161521" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/eb47aae1-9869-4428-98b4-0a185f9c43e0">
 
 **Heirarchy Check Script dumping**
 This will list all the verilog files present in the netlist directory. 
+<img width="930" alt="Screenshot 2023-11-06 144321" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/97e67aa7-8dad-4969-bcc9-e28862d72638">
+
 openMSP430.hier.ys
+<img width="928" alt="Screenshot 2023-11-06 163750" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/0d209f31-231d-48cf-8114-107af26827cf">
 
 **Heirarchy Check Run and Error Handling**
 If there is any error like missing a module used in the top level module, the script stops throwing an error Heirarchy Fails.
+
+Heirarchy check FAIL 
+<img width="935" alt="Screenshot 2023-11-06 155817" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/4449a976-a3f9-4e72-99f8-ca015646756e">
+
+<img width="927" alt="Screenshot 2023-11-06 155844" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/6d18c1ea-b52a-4fb5-8ed8-45efa1b11c30">
+
+Heirarchy check PASS 
+<img width="929" alt="Screenshot 2023-11-06 155943" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/7a91cdf8-9974-443c-a910-46a584401e11">
+
+<img width="931" alt="Screenshot 2023-11-06 160034" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5d216c9f-a8da-4bb0-816d-80aba4095afa">
+
+
+
 
