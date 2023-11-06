@@ -305,7 +305,23 @@ After searching the SDC file using grep command, to check the bussed signals, wh
 
 <img width="660" alt="Screenshot 2023-11-05 184635" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/c3a3db42-e576-4a17-b415-aec5b34ebb49">
 
+**Memory Module Yosys Synthesis and Explanation**
+The Verilog code for a single bit address and single bit data Memory unit is given below
+The basic Yosys script to run this and obtain a gate-level netlist of the memory module is given below.
+The output view of the netlist from the code is shown below
+Memory write process is explained in the following images 
+Memory Write
+Before First rising edge of the clock
+After first rising edge of the clock. Memory write is Done.
+Memory Read process is explained 
+Memory Read
+After the first rising edge and before the second rising edge of the clock
+After the second rising edge. Memory Read is done.
 
+**Heirarchy Check Script dumping**
+This will list all the verilog files present in the netlist directory. 
+openMSP430.hier.ys
 
-
+**Heirarchy Check Run and Error Handling**
+If there is any error like missing a module used in the top level module, the script stops throwing an error Heirarchy Fails.
 
