@@ -296,8 +296,87 @@ After searching the SDC file using grep command, to check the bussed signals, wh
 <img width="660" alt="Screenshot 2023-11-05 184635" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/c3a3db42-e576-4a17-b415-aec5b34ebb49">
 
 **Processing Output delay and load Constraints**
+
 Code
+
 ```
+#----------------------------------------------------------------#
+#-------Output Delay and Load Constraints------------------------#
+#----------------------------------------------------------------#
+
+puts "output delay constraints"
+set output_early_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] early_rise_delay] 0] 0]
+set output_early_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] early_fall_delay] 0] 0]
+set output_late_rise_delay_start   [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}]  late_rise_delay] 0] 0]
+set output_late_fall_delay_start   [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}]  late_fall_delay] 0] 0]
+
+set output_load_start [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] load] 0] 0]
+set related_clock  [lindex [lindex [constraints search rect $clock_start_column $output_port_start  [expr {$cons_columns-1}] [expr {$cons_rows-1}] clocks] 0] 0]
+
+set i [expr {$output_port_start +1}]
+set end_of_output_ports [expr {$cons_rows-1}]
+
+puts "Info:Working on output constraints:.."
+puts "Info:SDC Categorizing output ports as bits and busses"
+
+while {$i < $end_of_output_ports} {
+	set netlist [glob -dir $NetlistDirectory *.v]
+	set tmp_file [open /tmp/1 w]
+	foreach f $netlist {
+		set fd [open $f]
+		while {[gets $fd line] != -1} {
+                set pattern1 " [constraints get cell 0 $i];"
+                if {[regexp -all -- $pattern1 $line]}  {
+                        #puts "pattern1"
+                        set pattern2 [lindex [split $line ";"] 0]
+                        #puts "pattern2"
+                        if {[regexp -all  {input} [lindex [split $pattern2 "\S+"]0]]} {
+                                set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
+                                puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
+                                
+                        }
+                }
+        }
+        close $fd
+}
+close $tmp_file
+
+
+set tmp_file [open /tmp/1 r]
+set tmp2_file [open /tmp/2 w]
+puts -nonewline $tmp2_file "[join [lsort -unique [split [read $tmp_file] \n]] \n]"
+close $tmp_file
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+set count [split [llength [read $tmp2_file]] " "]
+if {$count > 2} {
+        set op_ports [concat [constraints get cell 0 $i]*]
+        puts "working on output bit $op_ports"
+} else {
+        set op_ports [constraints get cell 0 $i]
+        puts "working on output bit $op_ports"
+
+}
+
+
+#-----------------set output delay SDC commands-----------#
+
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $output_early_rise_delay_start $i] \[get_ports $op_ports\]"
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $output_early_fall_delay_start $i] \[get_ports $op_ports\]"
+
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $output_late_rise_delay_start $i] \[get_ports $op_ports\]"
+
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $output_late_fall_delay_start $i] \[get_ports $op_ports\]"
+
+puts -nonewline $sdc_file "\nset_load [constraints get cell $output_load_start $i] \[get_ports $op_ports\]"
+
+set i [expr {$i+1}]
+
+}
+
+close $tmp2_file
+close $sdc_file
+
 ```
 <img width="921" alt="Screenshot 2023-11-06 171601" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5c74c0f3-8f59-4db5-a529-ef63d1958e9c">
 
