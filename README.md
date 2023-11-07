@@ -459,11 +459,54 @@ Heirarchy check PASS
 <img width="931" alt="Screenshot 2023-11-06 160034" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5d216c9f-a8da-4bb0-816d-80aba4095afa">
 
 **Main yosys synthesis script dumping**
+Code
+```
+
+
+```
 Synthesis script openMSP430.ys has been created. This script is used to run the synthesis using yosys tool.
 
+
+<img width="926" alt="Screenshot 2023-11-07 173330" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/f05bebc1-106e-460c-a12a-622017f48b3e">
+
+<img width="928" alt="Screenshot 2023-11-07 181054" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/15b3d4d0-ce4e-4d09-a58d-8f1ae8629391">
+
+
 **Main synthesis Error Handling script**
+Code
+```
+
+
+```
 Synthesized Netlist is generated during this step.
 
+<img width="909" alt="Screenshot 2023-11-07 180430" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/de1880e4-ad15-47e1-bcdd-0efc1a95786f">
+
+Synthesis failed step
+
+<img width="913" alt="Screenshot 2023-11-07 192127" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/2c8b18ce-fcdf-4d20-9e75-a19313c64645">
+
+<img width="929" alt="Screenshot 2023-11-07 192213" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/b6b78b9c-0888-4757-af2c-72530b57732f">
+
+
 **Editing synth.v to be usable by opentimer**
+Code
+```
+
+
+```
 synth.v file has to be editied to make it usable for opentimer. "*" inside the netlist file are replaced and are considered as word, and removing "" from all the lines that have "".
+
+/tmp/1
+
+<img width="928" alt="Screenshot 2023-11-07 193116" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/445bff6c-e0ea-4304-9430-d12ebc3b08ff">
+
+openMSP430.synth.v
+
+<img width="915" alt="Screenshot 2023-11-07 193320" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/762febdb-8763-4e07-9675-6983b534d96e">
+
+openMSP430.synth.final.v
+
+<img width="929" alt="Screenshot 2023-11-07 193334" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/e894642e-ec23-4d42-ae11-da1c878fe809">
+
 
