@@ -643,7 +643,7 @@ proc read_verilog {arg1} {
 
 This procs converts SDC file contents to .timing file format for use by the OpenTimer tool, and the conversion code is explained stage by stage.
 
-__Converting clock constraints__
+__Converting create_clock constraints__
 
 Initially, the proc takes the SDC file as an input argument or parameter and processes the 'create_clock' constraints part of SDC.
 
@@ -681,4 +681,216 @@ foreach elem $find_clocks {
 }
 close $tmp_file
 ```
+__Converting 'set_clock_latency' constraints__
 
+Code
+
+```
+# Converting set_clock_latency constraints
+# ----------------------------------------
+set find_keyword [lsearch -all -inline $lines "set_clock_latency*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_clocks"]+1}]]
+	if {![string match $new_port_name $port_name]} {
+        	set new_port_name $port_name
+        	set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*"] ""]]
+        	set delay_value ""
+        	foreach new_elem $delays_list {
+        		set port_index [lsearch $new_elem "get_clocks"]
+        		lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+		puts -nonewline $tmp2_file "\nat $port_name $delay_value"
+	}
+}
+
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file [read $tmp2_file]
+close $tmp2_file
+```
+__Converting 'set_clock_transition' constraints__
+
+Code
+
+```
+# Converting set_clock_transition constraints
+# -------------------------------------------
+set find_keyword [lsearch -all -inline $lines "set_clock_transition*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_clocks"]+1}]]
+        if {![string match $new_port_name $port_name]} {
+		set new_port_name $port_name
+		set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*"] ""]]
+        	set delay_value ""
+        	foreach new_elem $delays_list {
+        		set port_index [lsearch $new_elem "get_clocks"]
+        		lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+        	puts -nonewline $tmp2_file "\nslew $port_name $delay_value"
+	}
+}
+
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file [read $tmp2_file]
+close $tmp2_file
+```
+__Converting 'set_input_delay' constraints__
+
+Processes 'set_input_transition' constraints part of SDC.
+
+Code
+```
+# Converting set_input_delay constraints
+# --------------------------------------
+set find_keyword [lsearch -all -inline $lines "set_input_delay*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_ports"]+1}]]
+        if {![string match $new_port_name $port_name]} {
+                set new_port_name $port_name
+        	set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*"] ""]]
+		set delay_value ""
+        	foreach new_elem $delays_list {
+        		set port_index [lsearch $new_elem "get_ports"]
+        		lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+        	puts -nonewline $tmp2_file "\nat $port_name $delay_value"
+	}
+}
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file [read $tmp2_file]
+close $tmp2_file
+```
+__Converting 'set_input_transition' constraints__
+
+Code
+
+```
+# Converting set_input_transition constraints
+# -------------------------------------------
+set find_keyword [lsearch -all -inline $lines "set_input_transition*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_ports"]+1}]]
+        if {![string match $new_port_name $port_name]} {
+                set new_port_name $port_name
+        	set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*"] ""]]
+        	set delay_value ""
+        	foreach new_elem $delays_list {
+        		set port_index [lsearch $new_elem "get_ports"]
+        		lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+        	puts -nonewline $tmp2_file "\nslew $port_name $delay_value"
+	}
+}
+
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file [read $tmp2_file]
+close $tmp2_file
+```
+__Converting set_output_delay constraints__
+
+Processesing 'set_output_delay' constraints part of SDC.
+Code
+```
+# Converting set_output_delay constraints
+# ---------------------------------------
+set find_keyword [lsearch -all -inline $lines "set_output_delay*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_ports"]+1}]]
+        if {![string match $new_port_name $port_name]} {
+                set new_port_name $port_name
+        	set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*"] ""]]
+        	set delay_value ""
+        	foreach new_elem $delays_list {
+        		set port_index [lsearch $new_elem "get_ports"]
+        		lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+        	puts -nonewline $tmp2_file "\nrat $port_name $delay_value"
+	}
+}
+
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file [read $tmp2_file]
+close $tmp2_file
+```
+__Converting set_load constraints__
+
+With this, all SDC constarints are processed, so we close the /tmp/3 file containing all processed data for now.
+
+Code
+```
+# Converting set_load constraints
+# -------------------------------
+set find_keyword [lsearch -all -inline $lines "set_load*"]
+set tmp2_file [open /tmp/2 w]
+set new_port_name ""
+foreach elem $find_keyword {
+        set port_name [lindex $elem [expr {[lsearch $elem "get_ports"]+1}]]
+        if {![string match $new_port_name $port_name]} {
+                set new_port_name $port_name
+        	set delays_list [lsearch -all -inline $find_keyword [join [list "*" " " $port_name " " "*" ] ""]]
+        	set delay_value ""
+        	foreach new_elem $delays_list {
+        	set port_index [lsearch $new_elem "get_ports"]
+        	lappend delay_value [lindex $new_elem [expr {$port_index-1}]]
+        	}
+        	puts -nonewline $timing_file "\nload $port_name $delay_value"
+	}
+}
+close $tmp2_file
+set tmp2_file [open /tmp/2 r]
+puts -nonewline $timing_file  [read $tmp2_file]
+close $tmp2_file
+
+# Closing tmp file after writing constraints converted from generated SDC
+close $timing_file
+```
+3.png
+4.png
+
+**Expanding the bussed input and output ports**
+
+The /tmp/3 file contains bussed ports as <port_name>*, which is expanded to each bit, and single-bit port lines are untouched. This new content is dumped to .timing file, and then the proc exits by giving output the OpenTimer command to access this .timing file.
+
+Code
+```
+# Expanding the bussed input and output ports to it's individual bits and writing final .timing file for OpenTimer
+set ot_timing_file [open $sdc_dirname/$sdc_filename.timing w]
+set timing_file [open /tmp/3 r]
+while { [gets $timing_file line] != -1 } {
+        if {[regexp -all -- {\*} $line]} {
+                set bussed [lindex [lindex [split $line "*"] 0] 1]
+                set final_synth_netlist [open $sdc_dirname/$sdc_filename.final.synth.v r]
+                while { [gets $final_synth_netlist line2] != -1 } {
+                        if {[regexp -all -- $bussed $line2] && [regexp -all -- {input} $line2] && ![string match "" $line]} {
+
+                        	puts -nonewline $ot_timing_file "\n[lindex [lindex [split $line "*"] 0 ] 0 ] [lindex [lindex [split $line2 ";"] 0 ] 1 ] [lindex [split $line "*"] 1 ]"
+
+                        } elseif {[regexp -all -- $bussed $line2] && [regexp -all -- {output} $line2] && ![string match "" $line]} {
+
+                        	puts -nonewline $ot_timing_file "\n[lindex [lindex [split $line "*"] 0 ] 0 ] [lindex [lindex [split $line2 ";"] 0 ] 1 ] [lindex [split $line "*"] 1 ]"
+
+                        }
+                }
+        } else {
+        	puts -nonewline $ot_timing_file  "\n$line"
+        }
+}
+close $timing_file
+puts "set_timing_fpath $sdc_dirname/$sdc_filename.timing"
+
+}
+```
