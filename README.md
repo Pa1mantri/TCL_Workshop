@@ -555,5 +555,130 @@ openMSP430.synth.final.v
 <img width="929" alt="Screenshot 2023-11-07 193334" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/e894642e-ec23-4d42-ae11-da1c878fe809">
 
 **World of Procs (TCL Procedure)**
+Procs can be used to define user-defined commands.
 
+*reopenStdout.proc*
+
+```
+#!/bin/tclsh
+proc reopenStdout {file} {
+	close stdout
+	open $file w
+}
+```
+
+*set_multi_cpu_usage.proc*
+
+This procs outputs the multiple threads of cpu usage command required for opentimer tool.
+
+Code
+```
+#!/bin/tclsh
+
+proc set_multi_cpu_usage {args} {
+        array set options {-localCpu <num_of_threads> -help "" }
+        while {[llength $args]} {
+                switch -glob -- [lindex $args 0] {
+                	-localCpu {
+				set args [lassign $args - options(-localCpu)]
+				puts "set_num_threads $options(-localCpu)"
+			}
+                	-help {
+				set args [lassign $args - options(-help) ]
+				puts "Usage: set_multi_cpu_usage -localCpu <num_of_threads> -help"
+				puts "\t-localCpu - To limit CPU threads used"
+				puts "\t-help - To print usage"
+                      	}
+                }
+        }
+}
+```
+1.png
+
+*read_lib.proc*
+Code
+
+```
+#!/bin/tclsh
+
+proc read_lib args {
+	# Setting command parameter options and its values
+	array set options {-late <late_lib_path> -early <early_lib_path> -help ""}
+	while {[llength $args]} {
+		switch -glob -- [lindex $args 0] {
+		-late {
+			set args [lassign $args - options(-late) ]
+			puts "set_late_celllib_fpath $options(-late)"
+		      }
+		-early {
+			set args [lassign $args - options(-early) ]
+			puts "set_early_celllib_fpath $options(-early)"
+		       }
+		-help {
+			set args [lassign $args - options(-help) ]
+			puts "Usage: read_lib -late <late_lib_path> -early <early_lib_path>"
+			puts "-late <provide late library path>"
+			puts "-early <provide early library path>"
+			puts "-help - Provides user deatails on how to use the command"
+		      }	
+		default break
+		}
+	}
+}
+
+```
+*read_verilog.proc*
+
+This procs outputs commands that are used to read the synthesized netlist required for the opentimer tool.
+
+```
+#!/bin/tclsh
+
+# Proc to convert read_verilog to OpenTimer format
+proc read_verilog {arg1} {
+	puts "set_verilog_fpath $arg1"
+}
+```
+*read_sdc.proc*
+
+This procs converts SDC file contents to .timing file format for use by the OpenTimer tool, and the conversion code is explained stage by stage.
+
+__Converting clock constraints__
+
+Initially, the proc takes the SDC file as an input argument or parameter and processes the 'create_clock' constraints part of SDC.
+
+```
+#!/bin/tclsh
+
+proc read_sdc {arg1} {
+
+# 'file dirname <>' to get directory path only from full path
+set sdc_dirname [file dirname $arg1]
+# 'file tail <>' to get last element
+set sdc_filename [lindex [split [file tail $arg1] .] 0 ]
+set sdc [open $arg1 r]
+set tmp_file [open /tmp/1 w]
+
+# Removing "[" & "]" from SDC for further processing the data with 'lindex'
+# 'read <>' to read entire file
+puts -nonewline $tmp_file [string map {"\[" "" "\]" " "} [read $sdc]]     
+close $tmp_file
+
+# Opening tmp file to write constraints converted from generated SDC
+set timing_file [open /tmp/3 w]
+
+# Converting create_clock constraints
+# -----------------------------------
+set tmp_file [open /tmp/1 r]
+set lines [split [read $tmp_file] "\n"]
+# 'lsearch -all -inline' to search list for pattern and retain elementas with pattern only
+set find_clocks [lsearch -all -inline $lines "create_clock*"]
+foreach elem $find_clocks {
+	set clock_port_name [lindex $elem [expr {[lsearch $elem "get_ports"]+1}]]
+	set clock_period [lindex $elem [expr {[lsearch $elem "-period"]+1}]]
+	set duty_cycle [expr {100 - [expr {[lindex [lindex $elem [expr {[lsearch $elem "-waveform"]+1}]] 1]*100/$clock_period}]}]
+	puts $timing_file "\nclock $clock_port_name $clock_period $duty_cycle"
+}
+close $tmp_file
+```
 
