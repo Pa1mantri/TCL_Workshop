@@ -461,7 +461,28 @@ Heirarchy check PASS
 **Main yosys synthesis script dumping**
 Code
 ```
+#--------------Main Synthesis Script----------------------------------#
 
+puts "\nInfo: Creating main synthesis script to be used by yosys"
+set data "read_liberty -lib -ignore_miss_dir -setattr blackbox ${LateLibraryPath}"
+set filename "$DesignName.ys"
+set fileId [open $OutputDirectory/$filename "w"]
+puts -nonewline $fileId $data
+set netlist [glob -dir $NetlistDirectory *.v]
+foreach f $netlist {
+	puts -nonewline $fileId "\nread_verilog $f"
+}
+
+puts -nonewline $fileId "\nhierarchy -top $DesignName"
+puts -nonewline $fileId "\nsynth -top $DesignName"
+puts -nonewline $fileId "\nsplitnets -ports -format ___ \ndfflibmap -liberty ${LateLibraryPath} \nopt"
+puts -nonewline $fileId "\nabc -liberty ${LateLibraryPath}"
+puts -nonewline $fileId "\nflatten"
+puts -nonewline $fileId "\nclean -purge\niopadmap -outpad BUFX2 A:Y -bits\nopt\nclean"
+puts -nonewline $fileId "\nwrite_verilog $OutputDirectory/$DesignName.synth.v    "
+close $fileId
+puts "\nSynthesis Script created and can be accessed from path $OutputDirectory/$DesignName.ys"
+puts "\nRunning synthesis"
 
 ```
 Synthesis script openMSP430.ys has been created. This script is used to run the synthesis using yosys tool.
@@ -474,8 +495,17 @@ Synthesis script openMSP430.ys has been created. This script is used to run the 
 
 **Main synthesis Error Handling script**
 Code
-```
 
+```
+#-------Running synthesis script using yosys-------------------------#
+
+if {[catch {exec yosys -s $OutputDirectory/$DesignName.ys >& $OutputDirectory/$DesignName.synthesis.log} msg]} {
+       puts "\nError: Synthesis failed due to errors. Please refer to log $OutputDirectory/$DesignName.synthesis.log for errors...."
+       exit
+} else {
+	puts "\nSynthesis finished successfully"
+       }
+puts "\nInfo: Please refer to log $OutputDirectory/$DesignName.synthesis.log"
 
 ```
 Synthesized Netlist is generated during this step.
@@ -492,6 +522,21 @@ Synthesis failed step
 **Editing synth.v to be usable by opentimer**
 Code
 ```
+#----------Edit synth.v to be usable by opentimer--------------------#
+
+set fileId [open /tmp/1 "w"]
+puts -nonewline $fileId [exec grep -v -w "*" $OutputDirectory/$DesignName.synth.v]
+close $fileId
+
+set output [open $OutputDirectory/$DesignName.final.synth.v "w"]
+
+set filename "/tmp/1"
+set fid [open $filename r]
+	while {[gets $fid line] != -1} {
+		puts -nonewline $output [string map {"\\" ""} $line]
+		puts -nonewline $output "\n"
+	}
+close $fid
 
 
 ```
@@ -508,5 +553,7 @@ openMSP430.synth.v
 openMSP430.synth.final.v
 
 <img width="929" alt="Screenshot 2023-11-07 193334" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/e894642e-ec23-4d42-ae11-da1c878fe809">
+
+**World of Procs (TCL Procedure)**
 
 
