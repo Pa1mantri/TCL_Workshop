@@ -458,6 +458,12 @@ Heirarchy check PASS
 
 <img width="931" alt="Screenshot 2023-11-06 160034" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/5d216c9f-a8da-4bb0-816d-80aba4095afa">
 
+**Main yosys synthesis script dumping**
+Synthesis script openMSP430.ys has been created. This script is used to run the synthesis using yosys tool.
 
+**Main synthesis Error Handling script**
+Synthesized Netlist is generated during this step.
 
+**Editing synth.v to be usable by opentimer**
+synth.v file has to be editied to make it usable for opentimer. "*" inside the netlist file are replaced and are considered as word, and removing "" from all the lines that have "".
 
