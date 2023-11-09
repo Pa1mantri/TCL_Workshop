@@ -593,7 +593,8 @@ proc set_multi_cpu_usage {args} {
         }
 }
 ```
-1.png
+
+<img width="913" alt="1" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/c9d5e6ff-3a5b-4b0d-a812-4423864afea8">
 
 *read_lib.proc*
 Code
