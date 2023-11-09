@@ -639,6 +639,12 @@ proc read_verilog {arg1} {
 	puts "set_verilog_fpath $arg1"
 }
 ```
+<img width="933" alt="Screenshot 2023-11-08 154616" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/96d3dacd-4858-47c9-bf0c-b8740530ce7f">
+
+Conf file output till the read_verilog propc
+
+<img width="928" alt="Screenshot 2023-11-08 154602" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/153b77ca-e39b-45df-b0ba-41afde8113c5">
+
 *read_sdc.proc*
 
 This procs converts SDC file contents to .timing file format for use by the OpenTimer tool, and the conversion code is explained stage by stage.
