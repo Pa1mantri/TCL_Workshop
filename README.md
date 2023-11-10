@@ -973,3 +973,97 @@ set time_elapsed_in_sec "[expr {[lindex $time_elapsed_in_us 0]/1000000}]sec"
 puts "\nInfo: STA finished in $time_elapsed_in_sec seconds"
 puts "\nInfo: Refer to $OutputDirectory/$DesignName.results for warnings and errors"
 ```
+<img width="926" alt="Screenshot 2023-11-10 181912" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/3f413e68-6811-474f-afcb-2773028b4f0d">
+
+<img width="834" alt="Screenshot 2023-11-10 182038" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/049976da-c394-46c4-99b6-1a9a890dde36">
+
+Code to obtain WNS,FEP,Instance Count
+
+```
+# Find worst output violation
+set worst_RAT_slack "-"
+set report_file [open $Output_Directory/$Design_Name.results r]
+set pattern {RAT}
+while { [gets $report_file line] != -1 } {
+	if {[regexp $pattern $line]} {
+		set worst_RAT_slack "[expr {[lindex $line 3]/1000}]ns"
+		break
+	} else {
+		continue
+	}
+}
+close $report_file
+
+# Find number of output violation
+set report_file [open $Output_Directory/$Design_Name.results r]
+set count 0
+while { [gets $report_file line] != -1 } {
+	incr count [regexp -all -- $pattern $line]
+}
+set Number_output_violations $count
+close $report_file
+
+# Find worst setup violation
+set worst_negative_setup_slack "-"
+set report_file [open $Output_Directory/$Design_Name.results r]
+set pattern {Setup}
+while { [gets $report_file line] != -1 } {
+	if {[regexp $pattern $line]} {
+		set worst_negative_setup_slack "[expr {[lindex $line 3]/1000}]ns"
+		break
+	} else {
+		continue
+	}
+}
+close $report_file
+
+# Find number of setup violation
+set report_file [open $Output_Directory/$Design_Name.results r]
+set count 0
+while { [gets $report_file line] != -1 } {
+	incr count [regexp -all -- $pattern $line]
+}
+set Number_of_setup_violations $count
+close $report_file
+
+# Find worst hold violation
+set worst_negative_hold_slack "-"
+set report_file [open $Output_Directory/$Design_Name.results r]
+set pattern {Hold}
+while { [gets $report_file line] != -1 } {
+	if {[regexp $pattern $line]} { 
+		set worst_negative_hold_slack "[expr {[lindex $line 3]/1000}]ns"
+		break
+	} else {
+		continue
+	}
+}
+close $report_file
+
+# Find number of hold violation
+set report_file [open $Output_Directory/$Design_Name.results r]
+set count 0
+while {[gets $report_file line] != -1} {
+	incr count [regexp -all - $pattern $line]
+}
+set Number_of_hold_violations $count
+close $report_file
+
+# Find number of instance
+set pattern {Num of gates}
+set report_file [open $Output_Directory/$Design_Name.results r]
+while {[gets $report_file line] != -1} {
+	if {[regexp -all -- $pattern $line]} {
+		set Instance_count [lindex [join $line " "] 4 ]
+		break
+	} else {
+		continue
+	}
+}
+close $report_file
+
+# Capturing end time of the script
+set end_time [clock clicks -microseconds]
+
+```
+
