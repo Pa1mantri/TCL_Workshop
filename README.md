@@ -909,3 +909,58 @@ Config file after timing file is generated inside
 After the bussed ports are expanded 
 
 <img width="924" alt="Screenshot 2023-11-10 174532" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/79addadc-a2f9-4461-b7da-9d2e5392faf5">
+
+**Preparation for rest of .conf file and .spef file for openTimer STA**
+
+Below is the code to write .spef with the current date and time in the spef code and to append the rest of the portion of .conf file.
+
+```
+# Preparation of .conf & .spef for OpenTimer STA
+# ----------------------------------------------
+# Continue to write .conf and also write a .spef
+# Writing .spef
+set enable_prelayout_timing 1
+if {$enable_prelayout_timing == 1} {
+	puts "\nInfo: enable_prelayout_timing is $enable_prelayout_timing. Enabling zero-wire load parasitics"
+	set spef_file [open $OutputDirectory/$DesignName.spef w]
+	puts $spef_file "*SPEF \"IEEE 1481-1998\" "
+	puts $spef_file "*DESIGN \"$DesignName\" "
+	puts $spef_file "*DATE \"[clock format [clock seconds] -format {%a %b %d %I:%M:%S %Y}]\" "
+	puts $spef_file "*VENDOR \"TAU 2015 Contest\" "
+	puts $spef_file "*PROGRAM \"Benchmark Parasitic Generator\" "
+	puts $spef_file "*VERSION \"0.0\" "
+	puts $spef_file "*DESIGN_FLOW \"NETLIST_TYPE_VERILOG\" "
+	puts $spef_file "*DIVIDER / "
+	puts $spef_file "*DELIMITER : "
+	puts $spef_file "*BUS_DELIMITER \[ \] "
+	puts $spef_file "*T_UNIT 1 PS "
+	puts $spef_file "*C_UNIT 1 FF "
+	puts $spef_file "*R_UNIT 1 KOHM "
+	puts $spef_file "*L_UNIT 1 UH "
+	close $spef_file
+}
+
+# Appending to .conf file
+set conf_file [open $OutputDirectory/$DesignName.conf a]
+puts $conf_file "set_spef_fpath $OutputDirectory/$DesignName.spef"
+puts $conf_file "init_timer "
+puts $conf_file "report_timer "
+puts $conf_file "report_wns "
+puts $conf_file "report_worst_paths -numPaths 10000 "
+close $conf_file
+```
+
+***STA using OpenTimer***
+
+Code to run STA on OpenTimer and capture its runtime
+
+```
+# Static Timing Analysis using OpenTimer
+# --------------------------------------
+# Running STA on OpenTimer and dumping log to .results and capturing runtime
+set tcl_precision 3
+set time_elapsed_in_us [time {exec /home/kunalg/Desktop/tools/opentimer/OpenTimer-1.0.5/bin/OpenTimer < $OutputDirectory/$DesignName.conf >& $OutputDirectory/$DesignName.results}]
+set time_elapsed_in_sec "[expr {[lindex $time_elapsed_in_us 0]/1000000}]sec"
+puts "\nInfo: STA finished in $time_elapsed_in_sec seconds"
+puts "\nInfo: Refer to $OutputDirectory/$DesignName.results for warnings and errors"
+```
