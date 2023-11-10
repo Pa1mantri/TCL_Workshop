@@ -1066,4 +1066,27 @@ close $report_file
 set end_time [clock clicks -microseconds]
 
 ```
+<img width="924" alt="Screenshot 2023-11-10 183909" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/9ce5cd0f-94f7-4ae2-a062-cc658d5db535">
 
+QoR Generation (Quality of results)
+
+Code
+```
+# Quality of Results (QoR) generation
+puts "\n"
+puts "                                                           ****PRELAYOUT TIMING RESULTS****\n"
+set formatStr {%15s%14s%21s%16s%16s%15s%15s%15s%15s}
+puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
+puts [format $formatStr "Design Name" "Runtime" "Instance Count" "WNS Setup" "FEP Setup" "WNS Hold" "FEP Hold" "WNS RAT" "FEP RAT"]
+puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
+foreach design_name $DesignName runtime $time_elapsed_in_sec instance_count $Instance_count wns_setup $worst_negative_setup_slack fep_setup $Number_of_setup_violations wns_hold $worst_negative_hold_slack fep_hold $Number_of_hold_violations wns_rat $worst_RAT_slack fep_rat $Number_output_violations {
+	puts [format $formatStr $design_name $runtime $instance_count $wns_setup $fep_setup $wns_hold $fep_hold $wns_rat $fep_rat]
+}
+puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
+puts "\n"
+```
+<img width="910" alt="Screenshot 2023-11-10 184502" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/30095e08-c1fb-42e1-a92c-65aa701068ca">
+
+**Acknowledgements**
+
+[Kual Ghosh](https://github.com/kunalg123), Co-founder, VSD Corp.Pvt.Ltd
