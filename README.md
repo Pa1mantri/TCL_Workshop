@@ -867,8 +867,7 @@ close $tmp2_file
 # Closing tmp file after writing constraints converted from generated SDC
 close $timing_file
 ```
-3.png
-4.png
+<img width="765" alt="Screenshot 2023-11-10 174708" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/b9ec4073-d3ad-46c4-abb2-225f514eaaf5">
 
 **Expanding the bussed input and output ports**
 
@@ -903,3 +902,10 @@ puts "set_timing_fpath $sdc_dirname/$sdc_filename.timing"
 
 }
 ```
+Config file after timing file is generated inside 
+
+<img width="932" alt="Screenshot 2023-11-10 174515" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/69086079-c055-483e-9f75-3ef8112403c3">
+
+After the bussed ports are expanded 
+
+<img width="924" alt="Screenshot 2023-11-10 174532" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/79addadc-a2f9-4461-b7da-9d2e5392faf5">
