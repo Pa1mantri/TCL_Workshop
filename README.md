@@ -949,6 +949,15 @@ puts $conf_file "report_wns "
 puts $conf_file "report_worst_paths -numPaths 10000 "
 close $conf_file
 ```
+<img width="930" alt="Screenshot 2023-11-10 180701" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/a764e1a4-96c2-44bb-aabc-ed8745698b7e">
+
+Conf file
+
+<img width="928" alt="Screenshot 2023-11-10 180555" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/3f5bc14a-0c78-4221-beda-46f7abcdff76">
+
+spef file
+
+<img width="930" alt="Screenshot 2023-11-10 180630" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/79f11381-e9de-43cd-b473-9f4bb8edff70">
 
 ***STA using OpenTimer***
 
