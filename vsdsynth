@@ -1,0 +1,49 @@
+#!/bin/tcsh -f
+echo
+echo "****************            ******            *"
+echo "        *                  *                  *"
+echo "        *                 *                   *"
+echo "        *                *                    *"
+echo "        *                *                    *"
+echo "        *                *                    *"
+echo "        *                 *                   *"
+echo "        *                  *                  *"
+echo "        *                    ******           **********"
+echo
+echo "	A unique User Interface  that will take RTL netlist and SDC constraints as input,"
+echo "   and will generate synthesized netlist and pre-layout timing report as output" 
+echo "		It used YOSYS and Opentimer"
+echo
+
+set my_work_dir = "/home/vsduser/vsdsynth"
+
+#-------------------------------------------------------------#
+#----------------TOOL INSTALLATION----------------------------#
+#-------------------------------------------------------------#
+
+if($#argv != 1) then
+echo "Info: Please provide the csv file"
+exit 1
+endif
+
+if(! -f $argv[1] || $argv[1] == "-help") then
+	if($argv[1] != "-help") then
+		echo "Error: cannot find csv file $argv[1]. Exiting..."
+		exit 1
+	else
+		echo USAGE: ./vsdsynth \<csv file\>
+		echo where  \<csv file\> consists of 2 columns
+		echo \<Design name\> is the name of the top module
+		echo \<Output Directoty\> is the name of the output directory where we want to dump synthesis script, synthesized netlist and timing reports
+		echo \<Netlist Directory\> is the name of directory where all the RTL netlists are present
+		echo \<Early Library path\> is the file path of the early cell library to be used for STA
+		echo \<Late Library path\> is the file path of the late cell library to be used for STA
+		echo \<Constraints file\> is csv file path of the constraints to be used for STA
+		echo
+		exit 1
+	endif
+
+else
+	tclsh vsdsynth.tcl $argv[1]
+endif
+
