@@ -1,365 +1,386 @@
 #!/bin/tclsh
 
-#variable creation
-#---------------------------------
-# Setting Command Line Argument([lindex $argv 0]) to variable(filename) where argv is a list in TCL.
-# lindex is used to retrieve a specific element from the list. 0 indicates teh first element of the list.
 
 set filename [lindex $argv 0]
 
-#packages for processing csv and matrix 
 package require csv
 package require struct::matrix
 
-#Initialisation of matrix m
+#Initialisation of matrix
 struct::matrix m
 
-#opening design details to file handler f
+#Opening desing details to the file handler f
 set f [open $filename]
 
 #parsing csv data into matrix "m"
 csv::read2matrix $f m , auto
 
-#closing the design details csv
 close $f
 
-#storing number of rows and columns of matrix in variables for further use
-set columns [m columns] 
+set columns [m columns]
 set rows [m rows]
 
-#Conversion of matrix to array
+#puts "$columns"
+#puts "$rows"
+
 m link my_arr
 
-#Auto variable creation and data assignment
 set i 0
+
+#--Data variable creation and data assignment---#
 while {$i < $rows} {
+
 	puts "\nInfo: setting $my_arr(0,$i) as $my_arr(1,$i)"
+
 	if {$i == 0} {
-		set [string map {" "  ""} $my_arr(0,$i)] $my_arr(1,$i)
+		set  [string map {" " ""} $my_arr(0,$i)] $my_arr(1,$i)
 	} else {
-		set [string map {" "  ""} $my_arr(0,$i)] [file normalize $my_arr(1,$i)]
+		set [string map {" " ""} $my_arr(0,$i)] [file normalize $my_arr(1,$i)]
 	}
-	set i [expr {$i + 1}]
+	set i [expr {$i+1}]
 }
 
 
-#----------------------------------------------------------------------------------------------#
-#--------Below Script checks whether directories and files mentioned in csv exists or not------#
-#----------------------------------------------------------------------------------------------#
+puts "\nInfo:Below are the list of intial variables and their values"
+puts "\nDesignName = $DesignName"
+puts "OutputDirectory = $OutputDirectory"
+puts "NetlistDirectory = $NetlistDirectory"
+puts "EarlyLibraryPath = $EarlyLibraryPath"
+puts "LateLibraryPath  = $LateLibraryPath"
+puts "ConstraintsFile = $ConstraintsFile"
+
+
+#--checking whether directories and files mentioned in the csv exists or not---#
 
 if {! [file exists $EarlyLibraryPath] } {
-	puts "\nError: Cannot find early cell library in $EarlyLibraryPath. Exiting....."
+	puts "\nError: cannot find early cell library in $EarlyLibraryPath. Exiting...."
 	exit
 } else {
-	puts "\nInfo: Early cell library found in the path $EarlyLibraryPath"
+	puts "\nInfo: Early cell library found in $EarlyLibraryPath."
 }
 if {! [file exists $LateLibraryPath] } {
-	puts "\nError: Cannot find late cell library in $LateLibraryPath. Exiting......"
+	puts "\nError: cannot find Late cell library in $LateLibraryPath. Exiting...."
 	exit
 } else {
-	puts "\nINfo: Late cell library found in the path $LateLibraryPath"
+	puts "\nInfo: Late cell library found in $LateLibraryPath."
 }
 if {! [file isdirectory $NetlistDirectory] } {
-	puts "\nError: cannot find RTL Netlist dirctory in path $NetlistDirectory. Exiting ...."
+	puts "\nError: cannot find RTL Netlist directory in path $NetlistDirectory. Exiting..."
 } else {
-	puts "\nInfo: RTL Netlist directory found in path $NetlistDirectory"
+	puts "\nInfo: RTL Netlist directory found in $NetlistDirectory"
 }
 if {! [file isdirectory $OutputDirectory] } {
-	puts "\nError: Cannot find output directory $OutputDirectory. Creating Directory...."
+	puts "\nError: cannot find Output directory in path $OutputDirectory.Creating Directory..."
 	file mkdir $OutputDirectory
 } else {
-	puts "\nInfo: Output Directory found in path $OutputDirectory"
+	puts "\nInfo: Output directory found in $OutputDirectory"
 }
 if {! [file exists $ConstraintsFile] } {
-	puts "\nError: Cannot find constraints file in path $ConstraintsFile. Exiting....."
+	puts "\nError: cannot find Constraints file in $ConstraintsFile. Exiting...."
 	exit
 } else {
-	puts "\nInfo: Constraints file found in the path $ConstraintsFile"
+	puts "\nInfo: Constraints file found in $ConstraintsFile."
 }
 
-puts "\nInfo: Below are the list of initial variables and their values. User can use these values for further debug."
+#--Constraints CSV file data processing and converting to format 1 and SDC format----#
+puts "\nInfo: Dumping sdc constraints for $DesignName"
+::struct::matrix cons
+set c1 [open $ConstraintsFile]
+csv::read2matrix $c1 cons , auto
+close $c1
 
-puts  "DesignName  = $DesignName"
-puts  "OutputDirectory = $OutputDirectory"
-puts  "NetlistDirectory = $NetlistDirectory"
-puts  "EarlyLibraryPath = $EarlyLibraryPath"
-puts  "LateLibraryPath  = $LateLibraryPath"
-puts  "ConstraintsFile  = $ConstraintsFile"
+set c_rows [cons rows]
+set ccolumns [cons columns]
+
+puts "\nInfo: Number of rows in constraints file are $c_rows"
+puts "\nInfo: Number of columns in constraints file are $ccolumns"
+
+#-check the row and column number for clock-----#
+set clk_strt [lindex [lindex [cons search all CLOCKS] 0 ] 1]
+set clk_strt_col [lindex [lindex [cons search all CLOCKS] 0 ] 0]
+puts "\nInfo: Clock starts from row number $clk_strt"
+puts "\nInfo: Clock starts from column number $clk_strt_col"
+
+#--check the row numbers for input and output sections--#
+
+set inp_strt [lindex [lindex [cons search all INPUTS] 0 ] 1]
+set out_strt [lindex [lindex [cons search all OUTPUTS] 0 ] 1]
+puts "\nInfo: Inputs starts from row number $inp_strt"
+puts "\nInfo: Outputs starts from row number $out_strt"
+
+#---Clock latency(delay) constraints---#
+#--Finding column number for clock latency in clocks section--#
+
+set clock_erd_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] early_rise_delay] 0 ] 0]
+set clock_efd_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] early_fall_delay] 0 ] 0]
+set clock_lrd_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] late_rise_delay] 0 ] 0]
+set clock_lfd_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] late_fall_delay] 0 ] 0] 
+
+#--Clock transistion constraints---#
+#--Finiding column number for clock transistion in clocks section---#
+
+set clock_ers_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] early_rise_slew] 0 ] 0]
+set clock_efs_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] early_fall_slew] 0 ] 0]
+set clock_lrs_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] late_rise_slew] 0 ] 0]
+set clock_lfs_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] late_fall_slew] 0 ] 0]
+
+#--Finding column number for frequncy and duty cycle---#
+
+set clock_fre_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] frequency] 0 ] 0]
+set clock_duty_start [lindex [lindex [cons search rect $clk_strt_col $clk_strt [expr {$ccolumns-1}] [expr {$inp_strt-1}] duty_cycle] 0 ] 0]
+
+#puts "column number of clock frequency $clock_fre_start"
+#puts "column number of clock duty cycle $clock_duty_start"
+#puts "column number of clock erd $clock_erd_start"
+#puts "column number of clock efd $clock_efd_start"
+#puts "column number of clock lrd $clock_lrd_start"
+#puts "column number of clock lfd $clock_lfd_start"
+
+#puts "column number of clock ers $clock_ers_start"
+#puts "column number of clock efs $clock_efs_start"
+#puts "column number of clock lrs $clock_lrs_start"
+#puts "column number of clock lfs $clock_lfs_start"
 
 
-#-----------Constrisnt file creation-----------------#
-#------SDC Format------------------------------------#
-#----------------------------------------------------#
-
-puts "\nDumping SDC constraints for $DesignName"
-::struct::matrix constraints
-set chan [open $ConstraintsFile]
-csv::read2matrix $chan constraints , auto
-close $chan
-set cons_rows [constraints rows]
-set cons_columns [constraints columns]
-puts "Info: NO.of rows in csv file are $cons_rows"
-puts "Info :No.of columns in csv file are $cons_columns"
-
-
-#check the row number for clock and column number of clock#
-set clock_start [lindex [lindex [constraints search all CLOCKS] 0 ] 1]
-set clock_start_column [lindex [lindex [constraints search all CLOCKS] 0] 0]
-puts "Row from which clock starts = $clock_start"
-puts "column from which clock starts = $clock_start_column"
-
-#check for row number for input section in constraints.csv file#
-set input_port_start [lindex [lindex [constraints search all INPUTS] 0] 1]
-puts "row from which input ports start = $input_port_start"
-
-#check for row number for output section in constraints.csv file#
-set output_port_start [lindex [lindex [constraints search all OUTPUTS] 0] 1]
-puts "row from which output ports start = $output_port_start"
-
-
-
-#--------------------------------------------------------#
-#-----------clock latency constraints--------------------#
-
-set clock_early_rise_delay_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_rise_delay] 0 ] 0]
-set clock_early_fall_delay_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_fall_delay] 0 ] 0]
-set clock_late_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_rise_delay] 0 ] 0]
-set clock_late_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_fall_delay] 0 ] 0]
-
-#--------------------------------------------------------#
-#---------clock transisition constraints-----------------#
-
-set clock_early_rise_slew_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_rise_slew] 0 ] 0]
-set clock_early_fall_slew_start [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}] early_fall_slew] 0 ] 0]
-set clock_late_rise_slew_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_rise_slew] 0 ] 0]
-set clock_late_fall_slew_start  [lindex [lindex [constraints search rect $clock_start_column $clock_start [expr {$cons_columns-1}] [expr {$input_port_start -1}]  late_fall_slew] 0 ] 0]
+#--Creating .sdc file with design name in the output directory in write mode---#
 
 set sdc_file [open $OutputDirectory/$DesignName.sdc "w"]
-set i [expr {$clock_start + 1}]
-set end_of_clock_ports [expr {$input_port_start -1}]
-puts "/nInfo: Working on clock constraints"
+set i [expr {$clk_strt +1}]
+set end_of_clocks [expr {$inp_strt-1}]
 
-while { $i < $end_of_clock_ports } {
-	#puts "working on clock [constraints get cell 0 $i]"
-	puts -nonewline $sdc_file  "\ncreate_clock -name [constraints get cell 0 $i] -period [constraints get cell 1 $i] -waveform \{0 [expr {[constraints get cell 1 $i]*[constraints get cell 2 $i]/100}] \} \[get_ports [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_transition -rise -min [constraints get cell $clock_early_rise_slew_start $i] \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_transition -fall -min [constraints get cell $clock_early_fall_slew_start $i] \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_transition -rise -max [constraints get cell $clock_late_rise_slew_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_transition -fall -max [constraints get cell $clock_late_fall_slew_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_latency -source -early -rise [constraints get cell $clock_early_rise_delay_start $i] \[get_clocks [constraints get cell 0 $i]\]" 
-	puts -nonewline $sdc_file "\nset_clock_latency -source -early -fall [constraints get cell $clock_early_fall_delay_start $i]  \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_latency -source -late -rise  [constraints get cell $clock_late_rise_delay_start $i]   \[get_clocks [constraints get cell 0 $i]\]"
-	puts -nonewline $sdc_file "\nset_clock_latency -source -late -fall  [constraints get cell $clock_late_fall_delay_start $i]   \[get_clocks [constraints get cell 0 $i]\]"
-	set i [expr {$i + 1}]
+#puts "$i"
+#puts "$end_of_clocks"
+
+#---working on printing clock constraints on to the sdc file--#
+
+while {$i < $end_of_clocks} {
+
+puts -nonewline $sdc_file "\ncreate_clock -name [cons get cell 0 $i] -period [cons get cell 1 $i] -waveform \{0 [expr {[cons get cell 1 $i]*[cons get cell 2 $i]/100}] \} \[get_ports [cons get cell 0 $i]\]" 
+puts -nonewline $sdc_file "\nset_clock_transition -min -rise [cons get cell $clock_ers_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_transition -min -fall [cons get cell $clock_efs_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_transition -max -rise [cons get cell $clock_lrs_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_transition -max -fall [cons get cell $clock_lfs_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_latency -source -early -rise [cons get cell $clock_erd_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_latency -source -late -fall [cons get cell $clock_lfd_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_latency -source -early -fall [cons get cell $clock_efd_start $i] \[get_clocks [cons get cell 0 $i]\]"
+puts -nonewline $sdc_file "\nset_clock_latency -source -late -rise [cons get cell $clock_lrd_start $i] \[get_clocks [cons get cell 0 $i]\]"
+
+set i [expr {$i+1}]
 }
-
-#--------------------------------------------------------------#
-#--Create input delay and slew constraints---------------------#
-#--------------------------------------------------------------#
-
-set input_early_rise_delay_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_rise_delay] 0 ] 0]
-set input_early_fall_delay_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_fall_delay] 0 ] 0]
-set input_late_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_rise_delay] 0 ] 0]
-set input_late_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_fall_delay] 0 ] 0]
+ 
+#---inputs section---------#
+#--Finding starting column number for inputs ---#
 
 
-set input_early_rise_slew_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_rise_slew] 0 ] 0]
-set input_early_fall_slew_start [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] early_fall_slew] 0 ] 0]
-set input_late_rise_slew_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_rise_slew] 0 ] 0]
-set input_late_fall_slew_start  [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}]  late_fall_slew] 0 ] 0]
+set input_erd_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] early_rise_delay] 0 ] 0] 
+set input_efd_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] early_fall_delay] 0 ] 0]
+set input_lrd_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] late_rise_delay] 0 ] 0]
+set input_lfd_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] late_fall_delay] 0 ] 0]
 
-set related_clock [lindex [lindex [constraints search rect $clock_start_column $input_port_start [expr {$cons_columns-1}] [expr {$output_port_start -1}] clocks] 0] 0]
+set input_ers_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] early_rise_slew] 0 ] 0]
+set input_efs_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] early_fall_slew] 0 ] 0]
+set input_lrs_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] late_rise_slew] 0 ] 0]
+set input_lfs_start [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] late_fall_slew] 0 ] 0]
 
-set i [expr {$input_port_start +1}]
-set end_of_input_port [expr {$output_port_start - 1}]
-puts "\nInfo:Working on Input Constraints.."
-puts "\nInfo:Caretorizing inputs ports as bits and busses"
-while {$i < $end_of_input_port } {
-	#------Differentiating the input ports between bits and bus---------#
+set input_related_clock [lindex [lindex [cons search rect $clk_strt_col $inp_strt [expr {$ccolumns-1}] [expr {$out_strt-1}] clocks] 0 ] 0]
+
+
+#puts "column number of input erd $input_erd_start"
+#puts "column number of input efd $input_efd_start"
+#puts "column number of input lrd $input_lrd_start"
+#puts "column number of input lfd $input_lfd_start"
+
+#puts "column number of input ers $input_ers_start"
+#puts "column number of input efs $input_efs_start"
+#puts "column number of input lrs $input_lrs_start"
+#puts "column number of input lfs $input_lfs_start"
+#puts "$input_related_clock"
+
+#--setting variables for input row start and end---#
+
+set i [expr {$inp_strt+1}]
+set end_of_inputs [expr {$out_strt-1}]
+puts "\nworking on input constraints"
+puts "\nCategorizing input ports as bits and busses"
+
+#while loop to write input constraints to the sdc file--#
+
+while { $i < $end_of_inputs } {
 set netlist [glob -dir $NetlistDirectory *.v]
 set tmp_file [open /tmp/1 w]
 foreach f $netlist {
-	set fd [open $f]
-	#puts "Reading file $f"
-	while {[gets $fd line] != -1} {     
-		set pattern1 " [constraints get cell 0 $i];"
-		if {[regexp -all -- $pattern1 $line]}  {
-			
-			set pattern2 [lindex [split $line ";"] 0]
-			if {[regexp -all  {input} [lindex [split $pattern2 "\S+"]0]]} {
-				set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
-				puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
-				
-			}
-		}
-	}
-	close $fd
+set fd [open $f]
+while { [gets $fd line] != -1 } {
+set pattern1 " [cons get cell 0 $i];"
+if { [regexp -all -- $pattern1 $line] } {
+set pattern2 [lindex [split $line ";"] 0]
+if { [regexp -all {input} [lindex [split $pattern2 "\S+"] 0]] } {
+set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
+puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
+}
+}
+}
+close $fd
 }
 close $tmp_file
-
-
 set tmp_file [open /tmp/1 r]
 set tmp2_file [open /tmp/2 w]
 puts -nonewline $tmp2_file "[join [lsort -unique [split [read $tmp_file] \n]] \n]"
 close $tmp_file
 close $tmp2_file
 set tmp2_file [open /tmp/2 r]
-set count [split [llength [read $tmp2_file]] " "]
-#puts "splitting contents of tmp_2 and counting number of elements in $count"
+set count [llength [read $tmp2_file]]
+close $tmp2_file
 if {$count > 2} {
-	set inp_ports [concat [constraints get cell 0 $i]*]
-	#puts "working on input bit $inp_ports"
+set inp_ports [concat [cons get cell 0 $i]*]
+#puts "Info: Working on input bus $inp_ports for user debug"
 } else {
-	set inp_ports [constraints get cell 0 $i] 
-	#puts "working on input bit $inp_ports"
-
+set inp_ports [cons get cell 0 $i]
+#puts "Info : Working on input bit $inp_ports for user debug"
 }
 
-#------------set input transition SDC commands --------#
-puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $input_early_rise_slew_start $i] \[get_ports $inp_ports\]" 
-puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $input_early_fall_slew_start $i] \[get_ports $inp_ports\]"
-puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $input_late_rise_slew_start $i] \[get_ports $inp_ports\]"
+#set_input_transition SDC command to set input transition values
+puts -nonewline $sdc_file "\nset_input_transition -clock \[get_clocks [cons get cell $input_related_clock $i]\] -min -rise -source_latency_included [cons get cell $input_ers_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_transition -clock \[get_clocks [cons get cell $input_related_clock $i]\] -min -fall -source_latency_included [cons get cell $input_efs_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_transition -clock \[get_clocks [cons get cell $input_related_clock $i]\] -max -rise -source_latency_included [cons get cell $input_lrs_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_transition -clock \[get_clocks [cons get cell $input_related_clock $i]\] -max -fall -source_latency_included [cons get cell $input_lfs_start $i] \[get_ports $inp_ports\]"
 
-puts -nonewline $sdc_file "\nset_input_transisiton -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $input_late_fall_slew_start $i] \[get_ports $inp_ports\]"
-
-
-#-----------------set input delay SDC commands-----------#
-puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $input_early_rise_delay_start $i] \[get_ports $inp_ports\]"
-puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $input_early_fall_delay_start $i] \[get_ports $inp_ports\]"
-
-puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $input_late_rise_delay_start $i] \[get_ports $inp_ports\]"
-
-puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $input_late_fall_delay_start $i] \[get_ports $inp_ports\]"
-
-
+#set_input_delay SDC command to set input latency values
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [cons  get cell $input_related_clock $i]\] -min -rise -source_latency_included [cons get cell $input_erd_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [cons  get cell $input_related_clock $i]\] -min -fall -source_latency_included [cons get cell $input_efd_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [cons  get cell $input_related_clock $i]\] -max -rise -source_latency_included [cons get cell $input_lrd_start $i] \[get_ports $inp_ports\]"
+puts -nonewline $sdc_file "\nset_input_delay -clock \[get_clocks [cons  get cell $input_related_clock $i]\] -max -fall -source_latency_included [cons get cell $input_lfd_start $i] \[get_ports $inp_ports\]"
 set i [expr {$i+1}]
 }
-close $tmp2_file
 
-#----------------------------------------------------------------#
-#-------Output Delay and Load Constraints------------------------#
-#----------------------------------------------------------------#
+#Output Section
 
-puts "output delay constraints"
-set output_early_rise_delay_start  [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] early_rise_delay] 0] 0]
-set output_early_fall_delay_start  [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] early_fall_delay] 0] 0]
-set output_late_rise_delay_start   [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}]  late_rise_delay] 0] 0]
-set output_late_fall_delay_start   [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}]  late_fall_delay] 0] 0]
+#Finding column number starting for output clock latency in output section
 
-set output_load_start [lindex [lindex [constraints search rect $clock_start_column $output_port_start [expr {$cons_columns-1}] [expr {$cons_rows-1}] load] 0] 0]
-set related_clock  [lindex [lindex [constraints search rect $clock_start_column $output_port_start  [expr {$cons_columns-1}] [expr {$cons_rows-1}] clocks] 0] 0]
+set output_erd_start [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] early_rise_delay] 0 ] 0]
+set output_efd_start [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] early_fall_delay] 0 ] 0]
+set output_lrd_start [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] late_rise_delay] 0 ] 0]
+set output_lfd_start [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] late_fall_delay] 0 ] 0]
 
-set i [expr {$output_port_start +1}]
-set end_of_output_ports [expr {$cons_rows-1}]
+#Finding column number starting for output realted clock in output section
 
-puts "Info:Working on output constraints:.."
-puts "Info:SDC Categorizing output ports as bits and busses"
+set output_related_clock [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] clocks] 0 ] 0]
 
-while {$i < $end_of_output_ports} {
-	set netlist [glob -dir $NetlistDirectory *.v]
-	set tmp_file [open /tmp/1 w]
-	foreach f $netlist {
-		set fd [open $f]
-		while {[gets $fd line] != -1} {
-                set pattern1 " [constraints get cell 0 $i];"
-                if {[regexp -all -- $pattern1 $line]}  {
-                        #puts "pattern1"
-                        set pattern2 [lindex [split $line ";"] 0]
-                        #puts "pattern2"
-                        if {[regexp -all  {input} [lindex [split $pattern2 "\S+"]0]]} {
-                                set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
-                                puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
-                                
-                        }
-                }
-        }
-        close $fd
+#Finding column number starting for output load in output section
+
+set output_load_start [lindex [lindex [cons search rect $clk_strt_col $out_strt [expr {$ccolumns-1}] [expr {$c_rows-1}] load] 0 ] 0]
+
+
+#puts "column number for output erd $output_erd_start"
+#puts "column number for output efd $output_efd_start"
+#puts "column number for output lrd $output_lrd_start"
+#puts "column number for output lfd $output_lfd_start"
+#puts "column number for output load $output_load_start"
+#puts "column number for output related clock $output_related_clock"
+
+#Setting varibales for actual output row start and end
+
+set i [expr {$out_strt+1}]
+set end_of_outputs [expr {$c_rows-1}]
+
+puts "\nInfo: Working on output constraints"
+puts "\nInfo: categorizing output ports as bits and busses"
+
+#while loop to write output constraints to the sdc file--#
+
+while { $i < $end_of_outputs } {
+set netlist [glob -dir $NetlistDirectory *.v]
+set tmp_file [open /tmp/1 w]
+foreach f $netlist {
+set fd [open $f]
+while { [gets $fd line] != -1 } {
+set pattern1 " [cons get cell 0 $i];"
+if { [regexp -all -- $pattern1 $line] } {
+set pattern2 [lindex [split $line ";"] 0]
+if { [regexp -all {output} [lindex [split $pattern2 "\S+"] 0]] } {
+set s1 "[lindex [split $pattern2 "\S+"] 0] [lindex [split $pattern2 "\S+"] 1] [lindex [split $pattern2 "\S+"] 2]"
+puts -nonewline $tmp_file "\n[regsub -all {\s+} $s1 " "]"
+}
+}
+}
+close $fd
 }
 close $tmp_file
-
-
 set tmp_file [open /tmp/1 r]
 set tmp2_file [open /tmp/2 w]
 puts -nonewline $tmp2_file "[join [lsort -unique [split [read $tmp_file] \n]] \n]"
 close $tmp_file
 close $tmp2_file
 set tmp2_file [open /tmp/2 r]
-set count [split [llength [read $tmp2_file]] " "]
+set count [llength [read $tmp2_file]]
+close $tmp2_file
 if {$count > 2} {
-        set op_ports [concat [constraints get cell 0 $i]*]
-        #puts "working on output bit $op_ports"
+set op_ports [concat [cons get cell 0 $i]*]
+#puts "Info: Working on output bus $op_ports for user debug"
 } else {
-        set op_ports [constraints get cell 0 $i]
-       # puts "working on output bit $op_ports"
-
+set op_ports [cons get cell 0 $i]
+#puts "Info : Working on output bit $op_ports for user debug"
 }
 
+#set_output_delay SDC command to set output latency values
 
-#-----------------set output delay SDC commands-----------#
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [cons get cell $output_related_clock $i]\] -min -rise -source_latency_included [cons get cell $output_erd_start $i] \[get_ports $op_ports\]"
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [cons get cell $output_related_clock $i]\] -min -fall -source_latency_included [cons get cell $output_efd_start $i] \[get_ports $op_ports\]"
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [cons get cell $output_related_clock $i]\] -max -rise -source_latency_included [cons get cell $output_lrd_start $i] \[get_ports $op_ports\]"
+puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [cons get cell $output_related_clock $i]\] -max -fall -source_latency_included [cons get cell $output_lfd_start $i] \[get_ports $op_ports\]"
 
-puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -rise -source_latency_included [constraints get cell $output_early_rise_delay_start $i] \[get_ports $op_ports\]"
-puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -min -fall -source_latency_included [constraints get cell $output_early_fall_delay_start $i] \[get_ports $op_ports\]"
+#set_load SDC command to set load values
 
-puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -rise -source_latency_included [constraints get cell $output_late_rise_delay_start $i] \[get_ports $op_ports\]"
-
-puts -nonewline $sdc_file "\nset_output_delay -clock \[get_clocks [constraints get cell $related_clock $i]\] -max -fall -source_latency_included [constraints get cell $output_late_fall_delay_start $i] \[get_ports $op_ports\]"
-
-puts -nonewline $sdc_file "\nset_load [constraints get cell $output_load_start $i] \[get_ports $op_ports\]"
+puts -nonewline $sdc_file "\nset_load [cons get cell $output_load_start $i] \[get_ports $op_ports\]"
 
 set i [expr {$i+1}]
 
 }
 
-close $tmp2_file
 close $sdc_file
+puts "\nInfo-SDC: SDC file created. COnstraints file can be found in the path $OutputDirectory/$DesignName.sdc"
 
-puts "Info:SDC file created. Use constraints from the path $OutputDirectory/$DesignName.sdc"
 
-#------------------------------------------------------------------#
-#---------------Heirarchy Check------------------------------------#
-#------------------------------------------------------------------#
+#Heirarachy check
 
-puts "\nInfo: Creating Heirarchy check script to be used by Yosys"
+puts "\nInfo: Creating Heirarchy check script to be used by yosys"
 set data "read_liberty -lib -ignore_miss_dir -setattr blackbox ${LateLibraryPath}"
-puts "data is \"$data\""
 set filename "$DesignName.hier.ys"
-puts "filename is \"$filename\""
 set fileId [open $OutputDirectory/$filename "w"]
 puts -nonewline $fileId $data
-
 set netlist [glob -dir $NetlistDirectory *.v]
-#puts "netlist is \"$netlist\""
 foreach f $netlist {
-	puts -nonewline $fileId "\nread_verilog $f"
-	#puts "$f"
+puts -nonewline $fileId "\nread_verilog $f"
 }
 puts -nonewline $fileId "\nhierarchy -check"
 close $fileId
 
+#Heirarchy check error handling
+#Running Heirarchy check in yosys by dumping log to log file and catching execution message
+
 set error_flag [catch {exec yosys -s $OutputDirectory/$DesignName.hier.ys >& $OutputDirectory/$DesignName.hierarchy_check.log} msg]
-puts "$error_flag"
 if {$error_flag} {
-	set filename "$OutputDirectory/$DesignName.hierarchy_check.log"
-	set pattern {referenced in module}
-	set count 0
-	set fid [open $filename r]
-	while {[gets $fid line] != -1} {
-		incr count [regexp -all -- $pattern $line]
-		if { [regexp -all -- $pattern $line]} {
-			puts "\nError: module [lindex $line 2] is not a part of design $DesignName"
-		       puts "\nInfo: Hierarchy check fail"
-       }
+set filename "$OutputDirectory/$DesignName.hierarchy_check.log"
+set pattern {referenced in module}
+# referenced in module is the statement yosys tool uses to indicate a missing module(Hierarchy Error)
+set count 0
+set fid [open $filename r]
+while { [gets $fid line ] != -1} {
+incr count [regexp -all -- $pattern $line]
+if { [regexp -all -- $pattern $line] } {
+puts "\nError: Module [lindex $line 2] is not a part of the $DesignName. Please correct RTL in the path '$NetlistDirectory'"
+puts "\nInfo: Hierarchy check fail"
+}
 }
 close $fid
+puts "\nInfo:Please check file hierarchy details in '[file normalize $OutputDirectory/$DesignName.hierarchy_check.log]'"
+exit
 } else {
-	puts "\nInfo: Hierarchy check PASS"
+puts "\nInfo: Hierarchy check PASS"
+puts "\nInfo: Please check file hierarchy details in '[file normalize $OutputDirectory/$DesignName.hierarchy_check.log]'"
 }
-puts "\nInfo: Please find Hierarchy check details in [file normalize $OutputDirectory/$DesignName.hierarchy_check.log] for more info.Exiting"
 
-
-#---------------------------------------------------------------------#
-#--------------Main Synthesis Script----------------------------------#
-#---------------------------------------------------------------------#
+#Main Synthesis Script
 
 puts "\nInfo: Creating main synthesis script to be used by yosys"
 set data "read_liberty -lib -ignore_miss_dir -setattr blackbox ${LateLibraryPath}"
@@ -368,87 +389,79 @@ set fileId [open $OutputDirectory/$filename "w"]
 puts -nonewline $fileId $data
 set netlist [glob -dir $NetlistDirectory *.v]
 foreach f $netlist {
-	puts -nonewline $fileId "\nread_verilog $f"
+puts -nonewline $fileId "\nread_verilog $f"
 }
-
 puts -nonewline $fileId "\nhierarchy -top $DesignName"
 puts -nonewline $fileId "\nsynth -top $DesignName"
-puts -nonewline $fileId "\nsplitnets -ports -format ___ \ndfflibmap -liberty ${LateLibraryPath} \nopt"
+puts -nonewline $fileId "\nsplitnets -ports -format ___\ndfflibmap -liberty ${LateLibraryPath} \nopt"
 puts -nonewline $fileId "\nabc -liberty ${LateLibraryPath}"
 puts -nonewline $fileId "\nflatten"
 puts -nonewline $fileId "\nclean -purge\niopadmap -outpad BUFX2 A:Y -bits\nopt\nclean"
-puts -nonewline $fileId "\nwrite_verilog $OutputDirectory/$DesignName.synth.v    "
+puts -nonewline $fileId "\nwrite_verilog $OutputDirectory/$DesignName.synth.v"
 close $fileId
-puts "\nSynthesis Script created and can be accessed from path $OutputDirectory/$DesignName.ys"
-puts "\nRunning synthesis"
+puts "\nInfo: Synthesis Script created and can be accessed from path $OutputDirectory/$DesignName.ys"
 
-#--------------------------------------------------------------------#
-#-------Running synthesis script using yosys-------------------------#
-#--------------------------------------------------------------------#
+puts "\nInfo: Running Synthesis"
 
-if {[catch {exec yosys -s $OutputDirectory/$DesignName.ys >& $OutputDirectory/$DesignName.synthesis.log} msg]} {
-       puts "\nError: Synthesis failed due to errors. Please refer to log $OutputDirectory/$DesignName.synthesis.log for errors...."
-       exit
+#Main synthesis error handling
+#Running main synthesis in yosys and dumping log file and catching execution message
+
+if [catch {exec yosys -s $OutputDirectory/$DesignName.ys >& $OutputDirectory/$DesignName.synthesis.log} msg] {
+puts "\nError: Synthesis failed due to errors"
+exit
 } else {
-	puts "\nSynthesis finished successfully"
-       }
-puts "\nInfo: Please refer to log $OutputDirectory/$DesignName.synthesis.log"
+puts "\nInfo: Synthesis finished Successfully."
+}
+puts "\nInfo: Please refer to log at $OutputDirectory/$DesignName.synthesis.log"
 
-
-#--------------------------------------------------------------------#
-#----------Edit synth.v to be usable by opentimer--------------------#
-#--------------------------------------------------------------------#
+#Editing .synth.v to a format compatabile for OpenTimer
 
 set fileId [open /tmp/1 "w"]
+
 puts -nonewline $fileId [exec grep -v -w "*" $OutputDirectory/$DesignName.synth.v]
 close $fileId
-
 set output [open $OutputDirectory/$DesignName.final.synth.v "w"]
-
 set filename "/tmp/1"
 set fid [open $filename r]
-	while {[gets $fid line] != -1} {
-		puts -nonewline $output [string map {"\\" ""} $line]
-		puts -nonewline $output "\n"
-	}
+
+while { [gets $fid line] != -1} {
+puts -nonewline $output [string map {"\\" ""} $line]
+puts -nonewline $output "\n"
+}
 close $fid
 close $output
 
-puts "\nInfo: Please find the synthesized netlist for $DesignName at below path.you can use this Netlist for STA and PNR"
-puts "\n$OutputDirectory/$DesignName.final.synth.v"
+puts "\nInfo: Find the synthesized final netlist for the design $DesignName at below path. you can use this netlist for STA and PNR."
+puts "\nPath : $OutputDirectory/$DesignName.final.synth.v"
 
-#--------------------------------------------------------------------#
-#----------static timing analysis using opentimer--------------------#
-#--------------------------------------------------------------------#
+#Preparation of .conf and .spef for OpenTimer STA
+# Procs used in the below code
 
-puts "\nInfo: Timing Analysis started..."
+puts "\nInfo: TIming analysis started"
 puts "\nInfo: Initializing number of threads,libraries,sdc,verilog netlist path..."
 
+#Sourcing required Procs
+
 source /home/vsduser/vsdsynth/procs/reopenStdout.proc
-source /home/vsduser/vsdsynth/procs/set_num_threads.proc
+source /home/vsduser/vsdsynth/procs/set_multi_cpu_usage.proc
+source /home/vsduser/vsdsynth/procs/read_verilog.proc
+source /home/vsduser/vsdsynth/procs/read_lib.proc
+source /home/vsduser/vsdsynth/procs/read_sdc.proc
+
 reopenStdout $OutputDirectory/$DesignName.conf
 set_multi_cpu_usage -localCpu 4
-
-
-source /home/vsduser/vsdsynth/procs/read_lib.proc
-read_lib -early /home/vsduser/vsdsynth/osu018_stdcells.lib
-
-read_lib -late  /home/vsduser/vsdsynth/osu018_stdcells.lib
-
-source /home/vsduser/vsdsynth/procs/read_verilog.proc
+read_lib -early $EarlyLibraryPath
+read_lib -late $LateLibraryPath
 read_verilog $OutputDirectory/$DesignName.final.synth.v
-
-
-source /home/vsduser/vsdsynth/procs/read_sdc.proc
 read_sdc $OutputDirectory/$DesignName.sdc
 reopenStdout /dev/tty
 
-# Continue to write .conf and also write a .spef
-# Writing .spef
+#Writing .spef
+
 set enable_prelayout_timing 1
-#puts "Info: Setting enable_prelayout_timing as $enable_prelayout_timing to write default .spef with zero-wire load parasitics since, actual .spef is not available. For user debug."
+puts "\nInfo: Setting enable_prelayout_timing as $enable_prelayout_timing to write default .spef with zero-wire load parasitics since, actual .spef is not available. For user debug."
 if {$enable_prelayout_timing == 1} {
-	puts "\nInfo: enable_prelayout_timing is $enable_prelayout_timing. Enabling zero-wire load parasitics"
+puts "\nInfo: enable_prelayout_timing is $enable_prelayout_timing. Enabling zero-wire load parasitics"
 	set spef_file [open $OutputDirectory/$DesignName.spef w]
 	puts $spef_file "*SPEF \"IEEE 1481-1998\" "
 	puts $spef_file "*DESIGN \"$DesignName\" "
@@ -468,7 +481,7 @@ if {$enable_prelayout_timing == 1} {
 }
 
 # Appending to .conf file
-#puts "Info: Appending rest of the required commands to .conf file. For user debug."
+puts "Info: Appending rest of the required commands to .conf file. For user debug."
 set conf_file [open $OutputDirectory/$DesignName.conf a]
 puts $conf_file "set_spef_fpath $OutputDirectory/$DesignName.spef"
 puts $conf_file "init_timer "
@@ -477,117 +490,129 @@ puts $conf_file "report_wns "
 puts $conf_file "report_worst_paths -numPaths 10000 "
 close $conf_file
 
-# Static Timing Analysis using OpenTimer
-# --------------------------------------
-# Running STA on OpenTimer and dumping log to .results and capturing runtime
+puts "entering STA analysis using OpenTimer"
+
+#Static Timing Analysis using OpenTimer
+#Running STA on OpenTimer dumping log to .results and capturing run time 
 set tcl_precision 3
 set time_elapsed_in_us [time {exec /home/vsduser/OpenTimer-1.0.5/bin/OpenTimer < $OutputDirectory/$DesignName.conf >& $OutputDirectory/$DesignName.results}]
-#puts "Info: time_elapsed_in_us = $time_elapsed_in_us. For user debug."
 set time_elapsed_in_sec "[expr {[lindex $time_elapsed_in_us 0]/1000000.0}]sec"
-#puts "Info: time_elapsed_in_sec = $time_elapsed_in_sec. For user debug."
-puts "\nInfo: STA finished in $time_elapsed_in_sec seconds"
+puts "\nInfo:STA finished in $time_elapsed_in_sec seconds"
 puts "\nInfo: Refer to $OutputDirectory/$DesignName.results for warnings and errors"
 
 
-# Find worst output violation
+#Finding worst output violation(RAT)
+
 set worst_RAT_slack "-"
 set report_file [open $OutputDirectory/$DesignName.results r]
 set pattern {RAT}
-while { [gets $report_file line] != -1 } {
-	if {[regexp $pattern $line]} {
-		set worst_RAT_slack "[expr {[lindex $line 3]/1000}]ns"
-		break
-	} else {
-		continue
-	}
+while { [gets $report_file line] != -1} {
+if {[regexp $pattern $line]} {
+set worst_RAT_slack "[expr {[lindex $line 3]/1000}]ns"
+break
+} else {
+continue
+}
 }
 close $report_file
 
-# Find number of output violation
+puts "worst_RAT_slack is $worst_RAT_slack"
+
+#Finding number of output violations
+
 set report_file [open $OutputDirectory/$DesignName.results r]
 set count 0
-while { [gets $report_file line] != -1 } {
-	incr count [regexp -all -- $pattern $line]
+while { [gets $report_file line] != -1} {
+incr count [regexp -all -- $pattern $line]
 }
-set Number_output_violations $count
+set number_output_violations $count
 close $report_file
 
-# Find worst setup violation
+puts "NUmber of output violations are $number_output_violations"
+
+
+
+
+#Finding worst setup violation
+
 set worst_negative_setup_slack "-"
 set report_file [open $OutputDirectory/$DesignName.results r]
 set pattern {Setup}
-while { [gets $report_file line] != -1 } {
-	if {[regexp $pattern $line]} {
-		set worst_negative_setup_slack "[expr {[lindex $line 3]/1000}]ns"
-		break
-	} else {
-		continue
-	}
+while { [gets $report_file line]!= -1} {
+if {[regexp $pattern $line]} {
+set worst_negative_setup_slack "[expr {[lindex $line 3]/1000}]ns"
+break
+} else {
+continue
+}
 }
 close $report_file
 
-# Find number of setup violation
+puts "woorrst_negative_sllack is $worst_negative_setup_slack"
+
+
+
+#Finding number of Setup violations
+
 set report_file [open $OutputDirectory/$DesignName.results r]
 set count 0
-while { [gets $report_file line] != -1 } {
-	incr count [regexp -all -- $pattern $line]
+while { [gets $report_file line]  != -1} {
+incr count [regexp -all -- $pattern $line]
 }
-set Number_of_setup_violations $count
+set number_of_setup_violations $count
 close $report_file
 
-# Find worst hold violation
-set worst_negative_hold_slack "-"
+puts "number of setup vioations is $number_of_setup_violations"
+
+
+
+#Finding worst Hold violations
+
+set worst_negative_Hold_slack "-"
 set report_file [open $OutputDirectory/$DesignName.results r]
 set pattern {Hold}
-while { [gets $report_file line] != -1 } {
-	if {[regexp $pattern $line]} { 
-		set worst_negative_hold_slack "[expr {[lindex $line 3]/1000}]ns"
-		break
-	} else {
-		continue
-	}
+while { [gets $report_file line] != -1} {
+if {[regexp $pattern $line]} {
+set worst_negative_Hold_slack "[expr {[lindex $line 3]/1000}]ns"
+break
+} else {
+continue
+}
 }
 close $report_file
 
-# Find number of hold violation
+puts "worst negative hold slack is $worst_negative_Hold_slack"
+
+
+#Finding number of Hold violations
+
 set report_file [open $OutputDirectory/$DesignName.results r]
 set count 0
-while {[gets $report_file line] != -1} {
-	incr count [regexp -all -- $pattern $line]
+while { [gets $report_file line] != -1} {
+incr count [regexp -all -- $pattern $line]
 }
-set Number_of_hold_violations $count
-close $report_file
+set number_of_Hold_violations $count
+close $report_file 
 
-# Find number of instance
+puts "number of hold violations are $number_of_Hold_violations"
+
+
+#Finding number of instances
+
 set pattern {Num of gates}
 set report_file [open $OutputDirectory/$DesignName.results r]
-while {[gets $report_file line] != -1} {
-	if {[regexp -all -- $pattern $line]} {
-		set Instance_count [lindex [join $line " "] 4 ]
-		break
-	} else {
-		continue
-	}
+while { [gets $report_file line] != -1} {
+if {[regexp -all -- $pattern $line]} {
+set instance_count [lindex [join $line " "] 4 ]
+puts "$instance_count"
+break
+} else {
+continue
+}
 }
 close $report_file
 
-# Capturing end time of the script
-set end_time [clock clicks -microseconds]
-
-# Setting total TCL script runtime to 'time_elapsed_in_sec' variable instead of just STA
-puts "Info: TCL script total runtime is $time_elapsed_in_sec. For user debug."
-
-puts "\nInfo: Below are the list of variable values. For user debug."
-puts "Design_Name is \{$DesignName\}" 
-puts "time_elapsed_in_sec is \{$time_elapsed_in_sec\}"
-puts "Instance_count is \{$Instance_count\}"
-puts "worst_negative_setup_slack is \{$worst_negative_setup_slack\}"
-puts "Number_of_setup_violations is \{$Number_of_setup_violations\}"
-puts "worst_negative_hold_slack is \{$worst_negative_hold_slack\}"
-puts "Number_of_hold_violations is \{$Number_of_hold_violations\}"
-puts "worst_RAT_slack is \{$worst_RAT_slack\}"
-puts "Number_output_violations is \{$Number_output_violations\}"
-
+puts "Instance_COUNT is $instance_count"
 
 # Quality of Results (QoR) generation
 puts "\n"
@@ -596,7 +621,7 @@ set formatStr {%15s%14s%21s%16s%16s%15s%15s%15s%15s}
 puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
 puts [format $formatStr "Design Name" "Runtime" "Instance Count" "WNS Setup" "FEP Setup" "WNS Hold" "FEP Hold" "WNS RAT" "FEP RAT"]
 puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
-foreach design_name $DesignName runtime $time_elapsed_in_sec instance_count $Instance_count wns_setup $worst_negative_setup_slack fep_setup $Number_of_setup_violations wns_hold $worst_negative_hold_slack fep_hold $Number_of_hold_violations wns_rat $worst_RAT_slack fep_rat $Number_output_violations {
+foreach design_name $DesignName runtime $time_elapsed_in_sec instance_count $instance_count wns_setup $worst_negative_setup_slack fep_setup $number_of_setup_violations wns_hold $worst_negative_Hold_slack fep_hold $number_of_Hold_violations wns_rat $worst_RAT_slack fep_rat $number_output_violations {
 	puts [format $formatStr $design_name $runtime $instance_count $wns_setup $fep_setup $wns_hold $fep_hold $wns_rat $fep_rat]
 }
 puts [format $formatStr "-----------" "-------" "--------------" "---------" "---------" "--------" "--------" "-------" "-------"]
