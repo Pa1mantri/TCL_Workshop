@@ -1,4 +1,4 @@
-# TCL_Workshop
+# Introduction
 A unique User-Interface that will take RTL Netlist and SDC Constraints as input and will generate synthesized netlist and pre-layout timing report as output using TCL Programming. TCL box is the user interface that is going to be designed to represent the data in the following format. 
 
 <img width="601" alt="Screenshot 2023-11-09 121409" src="https://github.com/Pa1mantri/TCL_Workshop/assets/114488271/009c9986-3716-4d01-bf73-7109bb5d5316">
